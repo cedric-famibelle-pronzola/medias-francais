@@ -1,0 +1,4 @@
+# Redirects pour la SPA
+# Toutes les routes vers index.html (gestion côté client)
+
+/*    /index.html   200

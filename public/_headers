@@ -1,0 +1,36 @@
+# Headers HTTP pour le SEO et la sécurité
+
+/*
+  # Sécurité
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  X-XSS-Protection: 1; mode=block
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), microphone=(), camera=()
+  
+  # Performance
+  X-DNS-Prefetch-Control: on
+  
+  # Cache statique
+  Cache-Control: public, max-age=31536000, immutable
+
+# Pas de cache pour les fichiers HTML (pour le SSR côté client)
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Pas de cache pour le manifest
+/site.webmanifest
+  Cache-Control: public, max-age=3600
+
+# Sitemap et robots.txt - cache court
+/sitemap.xml
+  Cache-Control: public, max-age=3600
+  Content-Type: application/xml; charset=utf-8
+
+/robots.txt
+  Cache-Control: public, max-age=3600
+  Content-Type: text/plain; charset=utf-8
+
+# Open Graph image - cache long
+/og-image.png
+  Cache-Control: public, max-age=604800
