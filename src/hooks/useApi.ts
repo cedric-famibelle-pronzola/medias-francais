@@ -12,6 +12,8 @@ import type {
 } from '@/types';
 
 // URL de base de l'API (configurable via variables d'environnement Vite)
+// API Repository: https://github.com/cedric-famibelle-pronzola/medias-francais-api
+// Production API: https://api.medias-francais.fr
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 // Helper pour faire les requêtes API
