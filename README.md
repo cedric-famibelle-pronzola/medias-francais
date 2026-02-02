@@ -1,0 +1,82 @@
+# Médias Français - Frontend
+
+Application React permettant de visualiser et explorer la propriété des médias français. Interface utilisateur moderne connectée à l'API Médias Français.
+
+## 🎯 Description
+
+Ce projet fournit une interface web intuitive pour explorer :
+- **Les médias** : Presse, télévision, radio et sites web
+- **Les personnes** : Propriétaires et actionnaires
+- **Les organisations** : Groupes, filiales et structures de détention
+- **Le réseau** : Visualisation interactive des liens de propriété
+- **Les statistiques** : Analyses et classements (Top Challenges, concentration...)
+
+Les données proviennent du projet [mdiplo/Medias_francais](https://github.com/mdiplo/Medias_francais) du Monde Diplomatique (mise à jour décembre 2024).
+
+## 🚀 Stack Technique
+
+- **Framework** : React 19 + TypeScript
+- **Build** : Vite 7
+- **Styling** : Tailwind CSS + shadcn/ui
+- **Graphiques** : Recharts
+- **Icônes** : Lucide React
+- **Notifications** : Sonner
+
+## 🛠️ Développement
+
+### Prérequis
+
+- Node.js 18+
+- L'API Médias Français en cours d'exécution (par défaut sur http://localhost:8000)
+
+### Installation
+
+```bash
+npm install
+```
+
+### Configuration
+
+Copier le fichier d'environnement :
+
+```bash
+cp .env.example .env
+```
+
+Variables disponibles :
+
+| Variable | Description | Défaut |
+|----------|-------------|--------|
+| `VITE_API_URL` | URL de base de l'API | `http://localhost:8000` |
+
+### Lancement en développement
+
+```bash
+npm run dev
+```
+
+L'application sera accessible sur http://localhost:5173
+
+### Build de production
+
+```bash
+npm run build
+```
+
+Les fichiers statiques seront générés dans le dossier `dist/`.
+
+## 📝 Licence
+
+Ce projet est distribué sous licence **AGPL-3.0** (GNU Affero General Public License v3.0).
+
+## 🤖 Crédits
+
+- **Données** : [Monde Diplomatique - Médias Français](https://github.com/mdiplo/Medias_francais)
+- **Interface** : Développée avec [Kimi](https://kimi.moonshot.cn), l'assistant IA de Moonshot AI
+- **Hébergement API** : [Deno Deploy](https://deno.com/deploy) (Deno Land Inc.)
+
+## ⚠️ Confidentialité
+
+**Collecte de données** : Cette application collecte des logs techniques (adresse IP, User-Agent, endpoints appelés) pour des raisons de sécurité, performance et diagnostic. Ces données sont stockées sur les serveurs de Deno Land Inc. (société américaine basée à San Diego, CA) via Deno Deploy.
+
+Consultez le fichier `PRIVACY.md` du projet API pour plus de détails sur le traitement des données.
