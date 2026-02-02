@@ -309,21 +309,137 @@ export function ReseauSection() {
     });
 
     filteredNodes.forEach(node => {
+      const isSelected = selectedNode?.id === node.id;
+      
+      // Ombre portée
+      ctx.save();
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+      ctx.shadowBlur = isSelected ? 15 : 8;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = isSelected ? 6 : 3;
+      
+      // Cercle extérieur (bordure)
       ctx.beginPath();
-      ctx.arc(node.x, node.y, node.radius, 0, 2 * Math.PI);
-      ctx.fillStyle = node.color;
+      ctx.arc(node.x, node.y, node.radius + 2, 0, 2 * Math.PI);
+      ctx.fillStyle = isSelected ? '#f59e0b' : 'white';
       ctx.fill();
       
-      if (selectedNode?.id === node.id) {
-        ctx.strokeStyle = '#f59e0b';
-        ctx.lineWidth = 3;
+      // Dégradé intérieur
+      const gradient = ctx.createRadialGradient(
+        node.x - node.radius * 0.3,
+        node.y - node.radius * 0.3,
+        0,
+        node.x,
+        node.y,
+        node.radius
+      );
+      
+      if (node.type === 'media') {
+        gradient.addColorStop(0, '#60a5fa');
+        gradient.addColorStop(0.5, '#3b82f6');
+        gradient.addColorStop(1, '#1d4ed8');
+      } else if (node.type === 'personne') {
+        gradient.addColorStop(0, '#a78bfa');
+        gradient.addColorStop(0.5, '#8b5cf6');
+        gradient.addColorStop(1, '#6d28d9');
+      } else {
+        gradient.addColorStop(0, '#34d399');
+        gradient.addColorStop(0.5, '#10b981');
+        gradient.addColorStop(1, '#047857');
+      }
+      
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, node.radius, 0, 2 * Math.PI);
+      ctx.fillStyle = gradient;
+      ctx.fill();
+      ctx.restore();
+      
+      // Reflet (effet glossy)
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(
+        node.x - node.radius * 0.3,
+        node.y - node.radius * 0.3,
+        node.radius * 0.4,
+        0,
+        2 * Math.PI
+      );
+      const highlightGradient = ctx.createRadialGradient(
+        node.x - node.radius * 0.3,
+        node.y - node.radius * 0.3,
+        0,
+        node.x - node.radius * 0.3,
+        node.y - node.radius * 0.3,
+        node.radius * 0.4
+      );
+      highlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.6)');
+      highlightGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      ctx.fillStyle = highlightGradient;
+      ctx.fill();
+      ctx.restore();
+      
+      // Icône au centre du nœud
+      ctx.save();
+      ctx.fillStyle = 'white';
+      ctx.font = `bold ${node.radius * 0.8}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+      ctx.shadowBlur = 2;
+      ctx.shadowOffsetX = 1;
+      ctx.shadowOffsetY = 1;
+      
+      let icon = '';
+      if (node.type === 'media') icon = '📺';
+      else if (node.type === 'personne') icon = '👤';
+      else icon = '🏢';
+      
+      ctx.fillText(icon, node.x, node.y);
+      ctx.restore();
+      
+      // Bordure de sélection avec glow
+      if (isSelected) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, node.radius + 6, 0, 2 * Math.PI);
+        ctx.strokeStyle = 'rgba(245, 158, 11, 0.4)';
+        ctx.lineWidth = 4;
         ctx.stroke();
+        
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, node.radius + 3, 0, 2 * Math.PI);
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.restore();
       }
 
+      // Label avec fond pour meilleure lisibilité
+      ctx.save();
+      const label = node.label.slice(0, 15);
+      ctx.font = 'bold 11px sans-serif';
+      const textMetrics = ctx.measureText(label);
+      const textWidth = textMetrics.width;
+      const textHeight = 14;
+      
+      // Fond du label
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+      ctx.beginPath();
+      ctx.roundRect(
+        node.x - textWidth / 2 - 4,
+        node.y + node.radius + 8,
+        textWidth + 8,
+        textHeight,
+        4
+      );
+      ctx.fill();
+      
+      // Texte du label
       ctx.fillStyle = '#1e293b';
-      ctx.font = '12px sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText(node.label.slice(0, 15), node.x, node.y + node.radius + 15);
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, node.x, node.y + node.radius + 15);
+      ctx.restore();
     });
 
     ctx.restore();
