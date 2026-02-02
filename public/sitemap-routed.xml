@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  
+  <!-- A utiliser SI tu passes à react-router-dom avec des vraies URLs -->
+  
+  <!-- Page d'accueil / Dashboard -->
+  <url>
+    <loc>https://medias-francais.fr/</loc>
+    <lastmod>2024-12-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  
+  <!-- Section Médias -->
+  <url>
+    <loc>https://medias-francais.fr/medias</loc>
+    <lastmod>2024-12-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
+  <!-- Section Personnes -->
+  <url>
+    <loc>https://medias-francais.fr/personnes</loc>
+    <lastmod>2024-12-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  
+  <!-- Section Organisations -->
+  <url>
+    <loc>https://medias-francais.fr/organisations</loc>
+    <lastmod>2024-12-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+  <!-- Section Réseau -->
+  <url>
+    <loc>https://medias-francais.fr/reseau</loc>
+    <lastmod>2024-12-01</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  
+</urlset>
