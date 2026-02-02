@@ -1,0 +1,47 @@
+# Robots.txt pour Médias Français
+# https://medias-francais.fr
+
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://medias-francais.fr/sitemap.xml
+
+# Empêcher l'indexation des ressources statiques inutiles
+Disallow: /assets/*.js$
+Disallow: /assets/*.css$
+
+# Autoriser les assets pour le rendu
+Allow: /assets/
+Allow: /*.png$
+Allow: /*.jpg$
+Allow: /*.svg$
+Allow: /*.ico$
+Allow: /*.webp$
+
+# Crawl-delay pour éviter de surcharger le serveur
+Crawl-delay: 1
+
+# Googlebot spécifique
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 0.5
+
+# Bingbot
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+# Archive.org
+User-agent: ia_archiver
+Allow: /
+
+# Interdire les bots nuisibles connus
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: AhrefsBot
+Crawl-delay: 10
+
+User-agent: SemrushBot
+Crawl-delay: 10
