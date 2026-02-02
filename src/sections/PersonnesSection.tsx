@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { usePersonnes, useTopChallenges } from '@/hooks/useApi';
+import { useState, useMemo, useEffect } from 'react';
+import { usePersonnes, useTopChallenges, usePersonneDetail } from '@/hooks/useApi';
 import type { Personne, TopChallenge } from '@/types';
 import { 
   Users, 
@@ -28,6 +28,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface PersonnesSectionProps {
   onSelectPersonne?: (personne: Personne) => void;
@@ -39,6 +40,9 @@ export function PersonnesSection({ onSelectPersonne }: PersonnesSectionProps) {
   const [selectedPersonne, setSelectedPersonne] = useState<Personne | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
+  const [personneToLoad, setPersonneToLoad] = useState<string | null>(null);
+  
+  const { data: personneDetail, loading: detailLoading } = usePersonneDetail(personneToLoad);
   
   const limit = 24;
   
@@ -74,15 +78,38 @@ export function PersonnesSection({ onSelectPersonne }: PersonnesSectionProps) {
   // Calculer le nombre total de médias pour une personne
   const getTotalMedias = (personne: Personne): number => {
     const directMedias = personne.mediasDirects?.length || 0;
-    const viaOrgs = personne.mediasViaOrganisations?.reduce((acc, org) => acc + (org.medias?.length || 0), 0) || 0;
+    const viaOrgs = personne.mediasViaOrganisations?.length || 0;
     return directMedias + viaOrgs;
   };
+
+  // Charger les détails quand on récupère via l'API
+  useEffect(() => {
+    if (personneDetail && personneToLoad) {
+      setSelectedPersonne(personneDetail);
+      setDetailOpen(true);
+      setPersonneToLoad(null);
+      if (onSelectPersonne) {
+        onSelectPersonne(personneDetail);
+      }
+    }
+  }, [personneDetail, personneToLoad, onSelectPersonne]);
 
   const handlePersonneClick = (personne: Personne) => {
     setSelectedPersonne(personne);
     setDetailOpen(true);
     if (onSelectPersonne) {
       onSelectPersonne(personne);
+    }
+  };
+  
+  const handleTopChallengeClick = (nom: string) => {
+    // Chercher d'abord dans les données déjà chargées
+    const fullPersonne = personnesData?.data.find(p => p.nom === nom);
+    if (fullPersonne) {
+      handlePersonneClick(fullPersonne);
+    } else {
+      // Sinon charger via l'API
+      setPersonneToLoad(nom);
     }
   };
 
@@ -176,13 +203,13 @@ export function PersonnesSection({ onSelectPersonne }: PersonnesSectionProps) {
                 Précédent
               </Button>
               <span className="text-sm text-muted-foreground">
-                Page {page} sur {personnesData.pagination.totalPages}
+                Page {page} sur {personnesData.pagination.pages}
               </span>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setPage(p => Math.min(personnesData.pagination.totalPages, p + 1))}
-                disabled={page === personnesData.pagination.totalPages}
+                onClick={() => setPage(p => Math.min(personnesData.pagination.pages, p + 1))}
+                disabled={page === personnesData.pagination.pages}
               >
                 Suivant
                 <ChevronRight className="h-4 w-4 ml-1" />
@@ -204,12 +231,8 @@ export function PersonnesSection({ onSelectPersonne }: PersonnesSectionProps) {
                 <TopChallengeCard 
                   key={person.nom} 
                   person={person} 
-                  onClick={() => {
-                    const fullPersonne = personnesData?.data.find(p => p.nom === person.nom);
-                    if (fullPersonne) {
-                      handlePersonneClick(fullPersonne);
-                    }
-                  }}
+                  onClick={() => handleTopChallengeClick(person.nom)}
+                  isLoading={detailLoading && personneToLoad === person.nom}
                 />
               ))}
             </div>
@@ -293,19 +316,29 @@ export function PersonnesSection({ onSelectPersonne }: PersonnesSectionProps) {
                       Médias via organisations
                     </h4>
                     <div className="space-y-4">
-                      {selectedPersonne.mediasViaOrganisations.map((orgInfo, idx) => (
-                        <div key={idx} className="p-3 bg-muted rounded-lg">
-                          <p className="font-medium mb-2">{orgInfo.organisation}</p>
-                          <div className="space-y-1">
-                            {orgInfo.medias.map((media, mIdx) => (
-                              <div key={mIdx} className="flex items-center justify-between text-sm">
-                                <span>{media.nom}</span>
-                                <Badge variant="outline" className="text-xs">{media.valeur}</Badge>
-                              </div>
-                            ))}
+                      {/* Regrouper les médias par organisation (via) */}
+                      {(() => {
+                        const grouped = selectedPersonne.mediasViaOrganisations.reduce((acc, media) => {
+                          const orgName = media.via || 'Organisation inconnue';
+                          if (!acc[orgName]) acc[orgName] = [];
+                          acc[orgName].push(media);
+                          return acc;
+                        }, {} as Record<string, typeof selectedPersonne.mediasViaOrganisations>);
+                        
+                        return Object.entries(grouped).map(([orgName, medias], idx) => (
+                          <div key={idx} className="p-3 bg-muted rounded-lg">
+                            <p className="font-medium mb-2">{orgName}</p>
+                            <div className="space-y-1">
+                              {medias.map((media, mIdx) => (
+                                <div key={mIdx} className="flex items-center justify-between text-sm">
+                                  <span>{media.nom}</span>
+                                  <Badge variant="outline" className="text-xs">{media.valeur}</Badge>
+                                </div>
+                              ))}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ));
+                      })()}
                     </div>
                   </div>
                 )}
@@ -351,46 +384,52 @@ interface PersonneCardProps {
 
 function PersonneCard({ personne, isTop, rank, totalMedias, onClick }: PersonneCardProps) {
   return (
-    <Card 
-      className="cursor-pointer hover:shadow-lg transition-all hover:-translate-y-1"
+    <div 
+      className="cursor-pointer"
       onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && onClick()}
     >
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between mb-3">
-          <div className="p-2 rounded-lg bg-purple-100 text-purple-700">
-            <Users className="h-5 w-5" />
+      <Card className="hover:shadow-lg transition-all hover:-translate-y-1 h-full">
+        <CardContent className="p-4">
+          <div className="flex items-start justify-between mb-3">
+            <div className="p-2 rounded-lg bg-purple-100 text-purple-700">
+              <Users className="h-5 w-5" />
+            </div>
+            {isTop && (
+              <Badge className="bg-amber-100 text-amber-700 border-amber-200">
+                <Crown className="h-3 w-3 mr-1" />
+                #{rank}
+              </Badge>
+            )}
           </div>
-          {isTop && (
-            <Badge className="bg-amber-100 text-amber-700 border-amber-200">
-              <Crown className="h-3 w-3 mr-1" />
-              #{rank}
-            </Badge>
-          )}
-        </div>
-        
-        <h3 className="font-semibold text-lg mb-2">{personne.nom}</h3>
-        
-        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <Newspaper className="h-4 w-4" />
-            {totalMedias}
-          </span>
-          <span className="flex items-center gap-1">
-            <Building2 className="h-4 w-4" />
-            {personne.organisations?.length || 0}
-          </span>
-        </div>
-      </CardContent>
-    </Card>
+          
+          <h3 className="font-semibold text-lg mb-2">{personne.nom}</h3>
+          
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <Newspaper className="h-4 w-4" />
+              {totalMedias}
+            </span>
+            <span className="flex items-center gap-1">
+              <Building2 className="h-4 w-4" />
+              {personne.organisations?.length || 0}
+            </span>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
 interface TopChallengeCardProps {
   person: TopChallenge;
   onClick: () => void;
+  isLoading?: boolean;
 }
 
-function TopChallengeCard({ person, onClick }: TopChallengeCardProps) {
+function TopChallengeCard({ person, onClick, isLoading }: TopChallengeCardProps) {
   const getRankColor = (rank: number) => {
     if (rank === 1) return 'bg-amber-500 text-white';
     if (rank === 4) return 'bg-gray-300 text-gray-800';
@@ -400,8 +439,11 @@ function TopChallengeCard({ person, onClick }: TopChallengeCardProps) {
 
   return (
     <div
-      onClick={onClick}
-      className="flex items-center justify-between p-4 rounded-lg bg-card border hover:shadow-md transition-all cursor-pointer"
+      onClick={isLoading ? undefined : onClick}
+      className={cn(
+        "flex items-center justify-between p-4 rounded-lg bg-card border transition-all",
+        isLoading ? "opacity-70 cursor-wait" : "hover:shadow-md cursor-pointer"
+      )}
     >
       <div className="flex items-center gap-4">
         <Badge className={`${getRankColor(person.rang)} text-lg px-3 py-1`}>
@@ -419,7 +461,11 @@ function TopChallengeCard({ person, onClick }: TopChallengeCardProps) {
           <p className="text-2xl font-bold">{person.nbMedias}</p>
           <p className="text-xs text-muted-foreground">média{person.nbMedias > 1 ? 's' : ''}</p>
         </div>
-        <Eye className="h-5 w-5 text-muted-foreground" />
+        {isLoading ? (
+          <div className="h-5 w-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+        ) : (
+          <Eye className="h-5 w-5 text-muted-foreground" />
+        )}
       </div>
     </div>
   );
