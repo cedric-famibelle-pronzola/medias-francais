@@ -27,7 +27,8 @@ Les données proviennent du projet [mdiplo/Medias_francais](https://github.com/m
 ### Prérequis
 
 - Node.js 18+
-- L'API Médias Français en cours d'exécution (par défaut sur http://localhost:8000)
+- L'[API Médias Français](https://github.com/cedric-famibelle-pronzola/medias-francais-api) en cours d'exécution (par défaut sur http://localhost:8000)
+- L'API de production est accessible sur https://api.medias-francais.fr
 
 ### Installation
 
@@ -47,7 +48,7 @@ Variables disponibles :
 
 | Variable | Description | Défaut |
 |----------|-------------|--------|
-| `VITE_API_URL` | URL de base de l'API | `http://localhost:8000` |
+| `VITE_API_URL` | URL de base de l'API | `http://localhost:8000` ou `https://api.medias-francais.fr` |
 
 ### Lancement en développement
 
@@ -75,6 +76,7 @@ Ce projet est distribué sous licence **AGPL-3.0** (GNU Affero General Public Li
 - **Repository** : [github.com/cedric-famibelle-pronzola/medias-francais](https://github.com/cedric-famibelle-pronzola/medias-francais)
 - **Interface** : Développée avec [Kimi](https://kimi.moonshot.cn), l'assistant IA de Moonshot AI
 - **Données** : [Monde Diplomatique - Médias Français](https://github.com/mdiplo/Medias_francais)
+- **API** : [github.com/cedric-famibelle-pronzola/medias-francais-api](https://github.com/cedric-famibelle-pronzola/medias-francais-api) - Déployée sur https://api.medias-francais.fr
 - **Hébergement API** : [Deno Deploy](https://deno.com/deploy) (Deno Land Inc.)
 
 ## ⚠️ Confidentialité
