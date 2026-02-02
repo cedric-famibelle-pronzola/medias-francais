@@ -46,9 +46,11 @@ export function Header({
             className="flex items-center gap-2 cursor-pointer"
             onClick={() => setActiveTab('dashboard')}
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-blue-600 to-indigo-700">
-              <Newspaper className="h-5 w-5 text-white" />
-            </div>
+            <img 
+              src="/logo.png" 
+              alt="Médias Français" 
+              className="h-10 w-10 rounded-lg object-cover"
+            />
             <div className="hidden sm:block">
               <h1 className="text-lg font-bold leading-tight">Médias Français</h1>
               <p className="text-xs text-muted-foreground">Propriété & Concentration</p>
