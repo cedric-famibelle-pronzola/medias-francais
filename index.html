@@ -3,11 +3,101 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Médias Français - Propriété</title>
+    
+    <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    
+    <!-- Preconnect pour les performances -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Preload des polices critiques -->
+    <link rel="preload" as="font" href="/fonts/inter-var.woff2" type="font/woff2" crossorigin>
+    
+    <!-- Meta tags SEO de base -->
+    <title>Médias Français - Propriété et Actionnariat des Médias</title>
+    <meta name="description" content="Explorez la propriété des médias français : découvrez qui détient la presse, la télévision, la radio et les sites web. Visualisation interactive des liens de propriété.">
+    <meta name="keywords" content="médias français, propriété médias, actionnariat, presse, télévision, radio, concentration médias, oligarques">
+    <meta name="author" content="Cédric Fami-Belle Pronzola">
+    <meta name="robots" content="index, follow">
+    <meta name="googlebot" content="index, follow">
+    <meta name="language" content="French">
+    <meta name="revisit-after" content="7 days">
+    <meta name="theme-color" content="#0f172a">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://medias-francais.fr">
+    <meta property="og:title" content="Médias Français - Propriété et Actionnariat des Médias">
+    <meta property="og:description" content="Explorez la propriété des médias français : découvrez qui détient la presse, la télévision, la radio et les sites web.">
+    <meta property="og:image" content="https://medias-francais.fr/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:locale" content="fr_FR">
+    <meta property="og:site_name" content="Médias Français">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://medias-francais.fr">
+    <meta property="twitter:title" content="Médias Français - Propriété et Actionnariat des Médias">
+    <meta property="twitter:description" content="Explorez la propriété des médias français : découvrez qui détient la presse, la télévision, la radio et les sites web.">
+    <meta property="twitter:image" content="https://medias-francais.fr/og-image.png">
+    
+    <!-- Données structurées JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Médias Français",
+      "description": "Explorez la propriété des médias français : découvrez qui détient la presse, la télévision, la radio et les sites web.",
+      "url": "https://medias-francais.fr",
+      "author": {
+        "@type": "Person",
+        "name": "Cédric Fami-Belle Pronzola"
+      },
+      "license": "https://www.gnu.org/licenses/agpl-3.0.html",
+      "isAccessibleForFree": true,
+      "inLanguage": "fr-FR"
+    }
+    </script>
+    
+    <!-- SoftwareApplication pour l'app -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "Médias Français",
+      "applicationCategory": "DataVisualizationApplication",
+      "operatingSystem": "Web",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR"
+      },
+      "license": "https://www.gnu.org/licenses/agpl-3.0.html",
+      "isAccessibleForFree": true,
+      "inLanguage": "fr-FR"
+    }
+    </script>
+    
+    <!-- Performance: DNS Prefetch -->
+    <link rel="dns-prefetch" href="//api.medias-francais.fr">
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Noscript fallback pour les bots qui n'exécutent pas JavaScript -->
+    <noscript>
+      <div style="padding: 20px; text-align: center; font-family: system-ui, sans-serif;">
+        <h1>Médias Français - Propriété des Médias</h1>
+        <p>Cette application nécessite JavaScript pour fonctionner correctement. Veuillez l'activer dans votre navigateur.</p>
+        <p>Données provenant du <a href="https://github.com/mdiplo/Medias_francais">Monde Diplomatique</a>.</p>
+      </div>
+    </noscript>
   </body>
 </html>
