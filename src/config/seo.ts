@@ -23,10 +23,10 @@ export const siteConfig = {
     'actionnaires médias',
   ],
   author: {
-    name: 'Cédric Fami-Belle Pronzola',
+    name: 'Cédric Cédric Famibelle-Pronzola',
     url: 'https://github.com/cedric-famibelle-pronzola',
   },
-  creator: 'Cédric Fami-Belle Pronzola',
+  creator: 'Cédric Cédric Famibelle-Pronzola',
   license: 'AGPL-3.0',
   licenseUrl: 'https://www.gnu.org/licenses/agpl-3.0.html',
   repository: 'https://github.com/cedric-famibelle-pronzola/medias-francais',
