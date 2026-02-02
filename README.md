@@ -79,6 +79,10 @@ Ce projet est distribué sous licence **AGPL-3.0** (GNU Affero General Public Li
 
 ## ⚠️ Confidentialité
 
-**Collecte de données** : Cette application collecte des logs techniques (adresse IP, User-Agent, endpoints appelés) pour des raisons de sécurité, performance et diagnostic. Ces données sont stockées sur les serveurs de Deno Land Inc. (société américaine basée à San Diego, CA) via Deno Deploy.
+**Collecte de données** : Cette application collecte des logs techniques (adresse IP, User-Agent, endpoints appelés) pour des raisons de sécurité, performance et diagnostic.
+
+**Hébergement des données :**
+- **API & Logs** : Deno Land Inc. (USA) via Deno Deploy
+- **Base de données (production)** : Neon (neon.tech) - PostgreSQL serverless
 
 Consultez le fichier `PRIVACY.md` du projet API pour plus de détails sur le traitement des données.

@@ -124,9 +124,15 @@ export function Footer() {
                     
                     <div className="space-y-2 text-sm text-muted-foreground">
                       <p>
-                        <strong>Hébergement :</strong> Ces données sont stockées sur les serveurs de{' '}
+                        <strong>Hébergement API :</strong> Les logs et l'application sont hébergés sur les serveurs de{' '}
                         <strong>Deno Land Inc</strong>, une société américaine basée à San Diego, CA, 
                         via Deno Deploy.
+                      </p>
+
+                      <p>
+                        <strong>Base de données :</strong> En production, les données sont stockées sur{' '}
+                        <strong>Neon</strong> (neon.tech), service de base de données serverless PostgreSQL 
+                        hébergé par Neon Inc.
                       </p>
                       
                       <p>
@@ -200,8 +206,9 @@ export function Footer() {
             <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
             <span>
               <strong>Avertissement :</strong> Votre adresse IP et votre User-Agent sont collectés 
-              et stockés par nos services et notre hébergeur (Deno Land Inc, USA) à des fins de 
-              sécurité et d'analyse. En utilisant cette application, vous acceptez cette collecte.
+              par nos services. Les données sont stockées par Deno Land Inc (USA) pour l'hébergement 
+              et Neon (neon.tech) pour la base de données. En utilisant cette application, 
+              vous acceptez cette collecte.
             </span>
           </p>
         </div>
