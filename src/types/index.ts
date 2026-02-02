@@ -4,7 +4,7 @@ export interface Pagination {
   page: number;
   limit: number;
   total: number;
-  totalPages: number;
+  pages: number;
 }
 
 export interface Proprietaire {
@@ -47,26 +47,19 @@ export interface Classements {
   forbes2021: boolean;
 }
 
-export interface MediaViaOrg {
-  organisation: string;
-  medias: Array<{
-    nom: string;
-    type: string;
-    qualificatif: string;
-    valeur: string;
-  }>;
+export interface MediaDetenu {
+  nom: string;
+  type: string;
+  qualificatif: string;
+  valeur: string;
+  via?: string;
 }
 
 export interface Personne {
   nom: string;
   classements: Classements;
-  mediasDirects: Array<{
-    nom: string;
-    type: string;
-    qualificatif: string;
-    valeur: string;
-  }>;
-  mediasViaOrganisations: MediaViaOrg[];
+  mediasDirects: MediaDetenu[];
+  mediasViaOrganisations: MediaDetenu[];
   organisations: Array<{
     nom: string;
     qualificatif: string;
