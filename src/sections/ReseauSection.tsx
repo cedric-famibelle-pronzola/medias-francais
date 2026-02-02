@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useMedias, usePersonnes, useOrganisations } from '@/hooks/useApi';
 import type { Media, Personne, Organisation } from '@/types';
 import { 
@@ -8,7 +8,15 @@ import {
   RotateCcw,
   Search,
   Filter,
-  Info
+  Info,
+  MousePointer2,
+  X,
+  Tv,
+  Users,
+  Building2,
+  Newspaper,
+  ChevronRight,
+  Hand
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,6 +24,8 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Select,
   SelectContent,
@@ -23,6 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { cn } from '@/lib/utils';
 
 // Types pour le graphe
 interface Node {
@@ -45,6 +56,12 @@ interface Edge {
   type: 'proprietaire' | 'filiale' | 'media';
 }
 
+// Dimensions internes du canvas
+const CANVAS_WIDTH = 800;
+const CANVAS_HEIGHT = 600;
+
+type ToolMode = 'select' | 'pan';
+
 export function ReseauSection() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [nodes, setNodes] = useState<Node[]>([]);
@@ -52,10 +69,28 @@ export function ReseauSection() {
   const [scale, setScale] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState<string | null>(null);
+  const [isPanning, setIsPanning] = useState(false);
+  const [toolMode, setToolMode] = useState<ToolMode>('select');
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const animationRef = useRef<number | null>(null);
+  const lastMousePos = useRef({ x: 0, y: 0 });
+  
+  // Refs pour éviter les problèmes de closure
+  const scaleRef = useRef(scale);
+  const offsetRef = useRef(offset);
+  const draggingRef = useRef(dragging);
+  const isPanningRef = useRef(isPanning);
+  const nodesRef = useRef(nodes);
+  const toolModeRef = useRef(toolMode);
+  
+  useEffect(() => { scaleRef.current = scale; }, [scale]);
+  useEffect(() => { offsetRef.current = offset; }, [offset]);
+  useEffect(() => { draggingRef.current = dragging; }, [dragging]);
+  useEffect(() => { isPanningRef.current = isPanning; }, [isPanning]);
+  useEffect(() => { nodesRef.current = nodes; }, [nodes]);
+  useEffect(() => { toolModeRef.current = toolMode; }, [toolMode]);
 
   const { data: mediasData, loading: mediasLoading } = useMedias(1, 50);
   const { data: personnesData, loading: personnesLoading } = usePersonnes(1, 50);
@@ -63,11 +98,16 @@ export function ReseauSection() {
 
   const loading = mediasLoading || personnesLoading || orgsLoading;
 
-  // Couleurs par type
   const typeColors = {
     media: '#3b82f6',
     personne: '#8b5cf6',
     organisation: '#10b981',
+  };
+
+  const typeIcons = {
+    media: Tv,
+    personne: Users,
+    organisation: Building2,
   };
 
   // Initialiser le graphe
@@ -77,7 +117,6 @@ export function ReseauSection() {
     const newNodes: Node[] = [];
     const newEdges: Edge[] = [];
 
-    // Ajouter les médias
     mediasData.data.forEach((media, i) => {
       const angle = (i / mediasData.data.length) * 2 * Math.PI;
       const radius = 250;
@@ -85,8 +124,8 @@ export function ReseauSection() {
         id: `media-${media.nom}`,
         label: media.nom,
         type: 'media',
-        x: 400 + Math.cos(angle) * radius,
-        y: 300 + Math.sin(angle) * radius,
+        x: CANVAS_WIDTH / 2 + Math.cos(angle) * radius,
+        y: CANVAS_HEIGHT / 2 + Math.sin(angle) * radius,
         vx: 0,
         vy: 0,
         radius: 20,
@@ -94,7 +133,6 @@ export function ReseauSection() {
         data: media,
       });
 
-      // Ajouter les liens vers les propriétaires
       media.proprietaires.forEach(prop => {
         newEdges.push({
           source: `media-${media.nom}`,
@@ -105,7 +143,6 @@ export function ReseauSection() {
       });
     });
 
-    // Ajouter les personnes
     personnesData.data.forEach((personne, i) => {
       const angle = (i / personnesData.data.length) * 2 * Math.PI + Math.PI;
       const radius = 200;
@@ -113,8 +150,8 @@ export function ReseauSection() {
         id: `personne-${personne.nom}`,
         label: personne.nom,
         type: 'personne',
-        x: 400 + Math.cos(angle) * radius,
-        y: 300 + Math.sin(angle) * radius,
+        x: CANVAS_WIDTH / 2 + Math.cos(angle) * radius,
+        y: CANVAS_HEIGHT / 2 + Math.sin(angle) * radius,
         vx: 0,
         vy: 0,
         radius: 25,
@@ -122,7 +159,6 @@ export function ReseauSection() {
         data: personne,
       });
 
-      // Ajouter les liens vers les organisations
       personne.organisations.forEach(org => {
         newEdges.push({
           source: `personne-${personne.nom}`,
@@ -133,7 +169,6 @@ export function ReseauSection() {
       });
     });
 
-    // Ajouter les organisations
     orgsData.data.forEach((org, i) => {
       const angle = (i / orgsData.data.length) * 2 * Math.PI + Math.PI / 2;
       const radius = 150;
@@ -141,8 +176,8 @@ export function ReseauSection() {
         id: `organisation-${org.nom}`,
         label: org.nom,
         type: 'organisation',
-        x: 400 + Math.cos(angle) * radius,
-        y: 300 + Math.sin(angle) * radius,
+        x: CANVAS_WIDTH / 2 + Math.cos(angle) * radius,
+        y: CANVAS_HEIGHT / 2 + Math.sin(angle) * radius,
         vx: 0,
         vy: 0,
         radius: 22,
@@ -150,7 +185,6 @@ export function ReseauSection() {
         data: org,
       });
 
-      // Ajouter les liens vers les médias
       org.medias.forEach(media => {
         newEdges.push({
           source: `organisation-${org.nom}`,
@@ -172,8 +206,8 @@ export function ReseauSection() {
     const simulate = () => {
       setNodes(prevNodes => {
         const newNodes = [...prevNodes];
+        const currentDragging = draggingRef.current;
         
-        // Forces de répulsion
         for (let i = 0; i < newNodes.length; i++) {
           for (let j = i + 1; j < newNodes.length; j++) {
             const dx = newNodes[j].x - newNodes[i].x;
@@ -191,7 +225,6 @@ export function ReseauSection() {
           }
         }
 
-        // Forces d'attraction (liens)
         edges.forEach(edge => {
           const source = newNodes.find(n => n.id === edge.source);
           const target = newNodes.find(n => n.id === edge.target);
@@ -211,17 +244,15 @@ export function ReseauSection() {
           }
         });
 
-        // Centre de gravité
         newNodes.forEach(node => {
-          const dx = 400 - node.x;
-          const dy = 300 - node.y;
+          const dx = CANVAS_WIDTH / 2 - node.x;
+          const dy = CANVAS_HEIGHT / 2 - node.y;
           node.vx += dx * 0.001;
           node.vy += dy * 0.001;
         });
 
-        // Mise à jour des positions
         newNodes.forEach(node => {
-          if (dragging !== node.id) {
+          if (currentDragging !== node.id) {
             node.vx *= 0.9;
             node.vy *= 0.9;
             node.x += node.vx;
@@ -242,7 +273,7 @@ export function ReseauSection() {
         cancelAnimationFrame(animationRef.current);
       }
     };
-  }, [nodes.length, edges, dragging]);
+  }, [nodes.length, edges]);
 
   // Dessiner le canvas
   useEffect(() => {
@@ -258,14 +289,12 @@ export function ReseauSection() {
     ctx.translate(offset.x, offset.y);
     ctx.scale(scale, scale);
 
-    // Filtrer les nœuds
     const filteredNodes = nodes.filter(node => {
       if (filterType !== 'all' && node.type !== filterType) return false;
       if (searchQuery.length >= 2 && !node.label.toLowerCase().includes(searchQuery.toLowerCase())) return false;
       return true;
     });
 
-    // Dessiner les liens
     ctx.strokeStyle = '#94a3b8';
     ctx.lineWidth = 1;
     edges.forEach(edge => {
@@ -279,22 +308,18 @@ export function ReseauSection() {
       }
     });
 
-    // Dessiner les nœuds
     filteredNodes.forEach(node => {
-      // Cercle
       ctx.beginPath();
       ctx.arc(node.x, node.y, node.radius, 0, 2 * Math.PI);
       ctx.fillStyle = node.color;
       ctx.fill();
       
-      // Bordure si sélectionné
       if (selectedNode?.id === node.id) {
         ctx.strokeStyle = '#f59e0b';
         ctx.lineWidth = 3;
         ctx.stroke();
       }
 
-      // Label
       ctx.fillStyle = '#1e293b';
       ctx.font = '12px sans-serif';
       ctx.textAlign = 'center';
@@ -304,16 +329,35 @@ export function ReseauSection() {
     ctx.restore();
   }, [nodes, edges, scale, offset, filterType, searchQuery, selectedNode]);
 
-  // Gestion des événements souris
-  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const screenToCanvas = useCallback((clientX: number, clientY: number) => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas) return { x: 0, y: 0 };
 
     const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX - rect.left - offset.x) / scale;
-    const y = (e.clientY - rect.top - offset.y) / scale;
+    const scaleX = CANVAS_WIDTH / rect.width;
+    const scaleY = CANVAS_HEIGHT / rect.height;
+    
+    const displayX = (clientX - rect.left) * scaleX;
+    const displayY = (clientY - rect.top) * scaleY;
+    
+    const x = (displayX - offsetRef.current.x) / scaleRef.current;
+    const y = (displayY - offsetRef.current.y) / scaleRef.current;
+    
+    return { x, y };
+  }, []);
 
-    const clickedNode = nodes.find(node => {
+  const handleMouseDown = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    const { x, y } = screenToCanvas(e.clientX, e.clientY);
+    lastMousePos.current = { x: e.clientX, y: e.clientY };
+
+    // Clic droit ou mode pan = déplacer la vue
+    if (e.button === 2 || toolModeRef.current === 'pan') {
+      setIsPanning(true);
+      return;
+    }
+
+    const clickedNode = nodesRef.current.find(node => {
       const dx = node.x - x;
       const dy = node.y - y;
       return Math.sqrt(dx * dx + dy * dy) < node.radius;
@@ -322,27 +366,37 @@ export function ReseauSection() {
     if (clickedNode) {
       setDragging(clickedNode.id);
       setSelectedNode(clickedNode);
+    } else {
+      setSelectedNode(null);
     }
-  };
+  }, [screenToCanvas]);
 
-  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
+    const { x, y } = screenToCanvas(e.clientX, e.clientY);
 
-    const rect = canvas.getBoundingClientRect();
-    const x = (e.clientX - rect.left - offset.x) / scale;
-    const y = (e.clientY - rect.top - offset.y) / scale;
-
-    if (dragging) {
+    if (draggingRef.current && toolModeRef.current === 'select') {
       setNodes(prev => prev.map(node => 
-        node.id === dragging ? { ...node, x, y, vx: 0, vy: 0 } : node
+        node.id === draggingRef.current ? { ...node, x, y, vx: 0, vy: 0 } : node
       ));
+    } else if (isPanningRef.current) {
+      const dx = e.clientX - lastMousePos.current.x;
+      const dy = e.clientY - lastMousePos.current.y;
+      setOffset(prev => ({
+        x: prev.x + dx,
+        y: prev.y + dy
+      }));
+      lastMousePos.current = { x: e.clientX, y: e.clientY };
     }
-  };
+  }, [screenToCanvas]);
 
-  const handleMouseUp = () => {
+  const handleMouseUp = useCallback(() => {
     setDragging(null);
-  };
+    setIsPanning(false);
+  }, []);
+
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+  }, []);
 
   const handleZoomIn = () => setScale(s => Math.min(s * 1.2, 3));
   const handleZoomOut = () => setScale(s => Math.max(s / 1.2, 0.3));
@@ -358,6 +412,8 @@ export function ReseauSection() {
       </div>
     );
   }
+
+  const TypeIcon = selectedNode ? typeIcons[selectedNode.type] : null;
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-6">
@@ -375,7 +431,7 @@ export function ReseauSection() {
       </div>
 
       {/* Controls */}
-      <div className="flex flex-col lg:flex-row gap-4">
+      <div className="flex flex-col lg:flex-row gap-4 flex-wrap">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -386,6 +442,7 @@ export function ReseauSection() {
             className="pl-9"
           />
         </div>
+        
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4 text-muted-foreground" />
           <Select value={filterType} onValueChange={setFilterType}>
@@ -400,14 +457,42 @@ export function ReseauSection() {
             </SelectContent>
           </Select>
         </div>
+
+        <div className="flex items-center gap-1 bg-muted rounded-lg p-1 border">
+          <Button
+            variant={toolMode === 'select' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setToolMode('select')}
+            className={cn(
+              "gap-1.5 transition-all",
+              toolMode === 'select' && "shadow-sm"
+            )}
+          >
+            <MousePointer2 className="h-4 w-4" />
+            Sélection
+          </Button>
+          <Button
+            variant={toolMode === 'pan' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setToolMode('pan')}
+            className={cn(
+              "gap-1.5 transition-all",
+              toolMode === 'pan' && "shadow-sm"
+            )}
+          >
+            <Hand className="h-4 w-4" />
+            Déplacer
+          </Button>
+        </div>
+
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={handleZoomOut}>
+          <Button variant="outline" size="icon" onClick={handleZoomOut} title="Zoom arrière">
             <ZoomOut className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="icon" onClick={handleZoomIn}>
+          <Button variant="outline" size="icon" onClick={handleZoomIn} title="Zoom avant">
             <ZoomIn className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="icon" onClick={handleReset}>
+          <Button variant="outline" size="icon" onClick={handleReset} title="Réinitialiser la vue">
             <RotateCcw className="h-4 w-4" />
           </Button>
         </div>
@@ -429,68 +514,288 @@ export function ReseauSection() {
         </div>
       </div>
 
-      {/* Canvas */}
-      <Card className="overflow-hidden">
-        <CardContent className="p-0">
-          <canvas
-            ref={canvasRef}
-            width={800}
-            height={600}
-            className="w-full cursor-move"
-            style={{ background: '#f8fafc' }}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
-          />
-        </CardContent>
-      </Card>
-
-      {/* Info panel */}
-      {selectedNode && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <div 
-                className="w-4 h-4 rounded-full" 
-                style={{ backgroundColor: selectedNode.color }} 
-              />
-              {selectedNode.label}
-              <Badge variant="outline">{selectedNode.type}</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {selectedNode.type === 'media' && (
-              <div className="space-y-2">
-                <p><strong>Type:</strong> {(selectedNode.data as Media).type}</p>
-                <p><strong>Prix:</strong> {(selectedNode.data as Media).prix || 'Non spécifié'}</p>
-                <p><strong>Propriétaires:</strong> {(selectedNode.data as Media).proprietaires.map(p => p.nom).join(', ')}</p>
-              </div>
-            )}
-            {selectedNode.type === 'personne' && (
-              <div className="space-y-2">
-                <p><strong>Médias directs:</strong> {(selectedNode.data as Personne).mediasDirects?.length || 0}</p>
-                <p><strong>Organisations:</strong> {(selectedNode.data as Personne).organisations?.length || 0}</p>
-              </div>
-            )}
-            {selectedNode.type === 'organisation' && (
-              <div className="space-y-2">
-                <p><strong>Propriétaires:</strong> {(selectedNode.data as Organisation).proprietaires.map(p => p.nom).join(', ')}</p>
-                <p><strong>Médias:</strong> {(selectedNode.data as Organisation).medias.length}</p>
-                <p><strong>Filiales:</strong> {(selectedNode.data as Organisation).filiales.length}</p>
-              </div>
-            )}
+      {/* Canvas et Info Panel côte à côte */}
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Canvas */}
+        <Card className={cn(
+          "overflow-hidden flex-1",
+          selectedNode && "lg:w-2/3"
+        )}>
+          <CardContent className="p-0">
+            <canvas
+              ref={canvasRef}
+              width={CANVAS_WIDTH}
+              height={CANVAS_HEIGHT}
+              className={cn(
+                "w-full touch-none",
+                toolMode === 'pan' ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
+              )}
+              style={{ background: '#f8fafc' }}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseUp}
+              onContextMenu={handleContextMenu}
+            />
           </CardContent>
         </Card>
-      )}
+
+        {/* Info Panel - Side Panel élégant */}
+        {selectedNode && TypeIcon && (
+          <Card className="lg:w-1/3 animate-in slide-in-from-right duration-300">
+            <CardHeader className="pb-4">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div 
+                    className="p-2.5 rounded-xl"
+                    style={{ backgroundColor: `${selectedNode.color}20` }}
+                  >
+                    <TypeIcon className="h-6 w-6" style={{ color: selectedNode.color }} />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">{selectedNode.label}</CardTitle>
+                    <Badge 
+                      variant="outline" 
+                      className="mt-1 capitalize"
+                      style={{ borderColor: selectedNode.color, color: selectedNode.color }}
+                    >
+                      {selectedNode.type}
+                    </Badge>
+                  </div>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => setSelectedNode(null)}
+                  className="shrink-0"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-[400px] pr-4">
+                {selectedNode.type === 'media' && (
+                  <div className="space-y-6">
+                    <InfoSection title="Informations générales">
+                      <InfoItem label="Type" value={(selectedNode.data as Media).type} />
+                      <InfoItem label="Prix" value={(selectedNode.data as Media).prix || 'Non spécifié'} />
+                      <InfoItem label="Échelle" value={(selectedNode.data as Media).echelle || 'Non spécifié'} />
+                      <InfoItem label="Périodicité" value={(selectedNode.data as Media).periodicite || 'Non spécifié'} />
+                    </InfoSection>
+
+                    <Separator />
+
+                    <InfoSection title="Propriétaires directs" icon={Users}>
+                      {(selectedNode.data as Media).proprietaires.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">Aucun propriétaire connu</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {(selectedNode.data as Media).proprietaires.map((prop, idx) => (
+                            <div 
+                              key={idx} 
+                              className="flex items-center justify-between p-3 bg-muted rounded-lg"
+                            >
+                              <div className="flex items-center gap-2">
+                                <Badge variant={prop.type === 'personne' ? 'default' : 'secondary'}>
+                                  {prop.type === 'personne' ? 'Personne' : 'Organisation'}
+                                </Badge>
+                                <span className="font-medium">{prop.nom}</span>
+                              </div>
+                              <Badge variant="outline">{prop.valeur}</Badge>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </InfoSection>
+
+                    {(selectedNode.data as Media).chaineProprietaires.length > 0 && (
+                      <>
+                        <Separator />
+                        <InfoSection title="Chaîne de propriété" icon={ChevronRight}>
+                          <div className="space-y-3">
+                            {(selectedNode.data as Media).chaineProprietaires.map((chaine, idx) => (
+                              <div key={idx} className="p-3 bg-muted/50 rounded-lg">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  {chaine.chemin.map((nom, i) => (
+                                    <span key={i} className="flex items-center text-sm">
+                                      <span className="font-medium">{nom}</span>
+                                      {i < chaine.chemin.length - 1 && (
+                                        <ChevronRight className="h-4 w-4 mx-1 text-muted-foreground" />
+                                      )}
+                                    </span>
+                                  ))}
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-2">
+                                  Valeur finale: <Badge variant="outline" className="text-xs">{chaine.valeurFinale}</Badge>
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </InfoSection>
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {selectedNode.type === 'personne' && (
+                  <div className="space-y-6">
+                    {((selectedNode.data as Personne).classements?.challenges2024) && (
+                      <div className="p-4 bg-amber-50 rounded-lg border border-amber-200">
+                        <p className="text-sm text-amber-800 font-medium">
+                          🏆 Top Challenges 2024 : #{(selectedNode.data as Personne).classements!.challenges2024}
+                        </p>
+                      </div>
+                    )}
+
+                    <InfoSection title="Médias directs" icon={Newspaper}>
+                      {((selectedNode.data as Personne).mediasDirects?.length || 0) === 0 ? (
+                        <p className="text-sm text-muted-foreground">Aucun média direct</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {(selectedNode.data as Personne).mediasDirects?.map((media, idx) => (
+                            <div key={idx} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                              <span className="font-medium">{media.nom}</span>
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline" className="text-xs">{media.type}</Badge>
+                                <Badge variant="outline" className="text-xs">{media.valeur}</Badge>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </InfoSection>
+
+                    <Separator />
+
+                    <InfoSection title="Organisations" icon={Building2}>
+                      {((selectedNode.data as Personne).organisations?.length || 0) === 0 ? (
+                        <p className="text-sm text-muted-foreground">Aucune organisation</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {(selectedNode.data as Personne).organisations?.map((org, idx) => (
+                            <div key={idx} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                              <span className="font-medium">{org.nom}</span>
+                              <Badge variant="outline">{org.valeur}</Badge>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </InfoSection>
+                  </div>
+                )}
+
+                {selectedNode.type === 'organisation' && (
+                  <div className="space-y-6">
+                    {(selectedNode.data as Organisation).commentaire && (
+                      <div className="p-4 bg-muted rounded-lg">
+                        <p className="text-sm">{(selectedNode.data as Organisation).commentaire}</p>
+                      </div>
+                    )}
+
+                    <InfoSection title="Propriétaires" icon={Users}>
+                      {(selectedNode.data as Organisation).proprietaires.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">Aucun propriétaire connu</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {(selectedNode.data as Organisation).proprietaires.map((prop, idx) => (
+                            <div key={idx} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                              <div className="flex items-center gap-2">
+                                <Badge variant={prop.type === 'personne' ? 'default' : 'secondary'}>
+                                  {prop.type === 'personne' ? 'Personne' : 'Organisation'}
+                                </Badge>
+                                <span className="font-medium">{prop.nom}</span>
+                              </div>
+                              <Badge variant="outline">{prop.valeur}</Badge>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </InfoSection>
+
+                    <Separator />
+
+                    <InfoSection title="Filiales" icon={Building2}>
+                      {(selectedNode.data as Organisation).filiales.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">Aucune filiale</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {(selectedNode.data as Organisation).filiales.map((fil, idx) => (
+                            <div key={idx} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                              <span className="font-medium">{fil.nom}</span>
+                              {fil.valeur && <Badge variant="outline">{fil.valeur}</Badge>}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </InfoSection>
+
+                    <Separator />
+
+                    <InfoSection title="Médias possédés" icon={Newspaper}>
+                      {(selectedNode.data as Organisation).medias.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">Aucun média direct</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {(selectedNode.data as Organisation).medias.map((media, idx) => (
+                            <div key={idx} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                              <div>
+                                <p className="font-medium">{media.nom}</p>
+                                <p className="text-xs text-muted-foreground">{media.type}</p>
+                              </div>
+                              <Badge variant="outline">{media.valeur}</Badge>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </InfoSection>
+                  </div>
+                )}
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
       {/* Instructions */}
       <Alert>
         <Info className="h-4 w-4" />
         <AlertDescription>
-          Cliquez et déplacez les nœuds pour réorganiser le graphe. Utilisez les boutons de zoom pour agrandir ou réduire la vue.
+          <span className="font-medium">Mode Sélection :</span> Cliquez sur un nœud pour voir ses détails, faites glisser pour le déplacer. 
+          <span className="font-medium ml-2">Mode Déplacer :</span> Cliquez et faites glisser pour naviguer dans le graphe. 
+          Vous pouvez aussi utiliser le clic droit pour déplacer la vue.
         </AlertDescription>
       </Alert>
+    </div>
+  );
+}
+
+// Composants utilitaires pour l'affichage
+function InfoSection({ 
+  title, 
+  icon: Icon,
+  children 
+}: { 
+  title: string; 
+  icon?: React.ComponentType<{ className?: string }>;
+  children: React.ReactNode 
+}) {
+  return (
+    <div className="space-y-3">
+      <h4 className="font-semibold text-sm flex items-center gap-2 text-muted-foreground uppercase tracking-wide">
+        {Icon && <Icon className="h-4 w-4" />}
+        {title}
+      </h4>
+      {children}
+    </div>
+  );
+}
+
+function InfoItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex justify-between items-center py-1">
+      <span className="text-sm text-muted-foreground">{label}</span>
+      <span className="text-sm font-medium">{value}</span>
     </div>
   );
 }
