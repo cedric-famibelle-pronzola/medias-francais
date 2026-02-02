@@ -177,7 +177,7 @@ export function Footer() {
 
                       <p className="pt-2">
                         <a
-                          href="https://github.com/mdiplo/Medias_francais"
+                          href="https://github.com/cedric-famibelle-pronzola/medias-francais"
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center gap-1 font-medium text-foreground hover:underline"
