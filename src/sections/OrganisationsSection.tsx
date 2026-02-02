@@ -143,13 +143,13 @@ export function OrganisationsSection({ onSelectOrganisation }: OrganisationsSect
             Précédent
           </Button>
           <span className="text-sm text-muted-foreground">
-            Page {page} sur {orgsData.pagination.totalPages}
+            Page {page} sur {orgsData.pagination.pages}
           </span>
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setPage(p => Math.min(orgsData.pagination.totalPages, p + 1))}
-            disabled={page === orgsData.pagination.totalPages}
+            onClick={() => setPage(p => Math.min(orgsData.pagination.pages, p + 1))}
+            disabled={page === orgsData.pagination.pages}
           >
             Suivant
             <ChevronRight className="h-4 w-4 ml-1" />

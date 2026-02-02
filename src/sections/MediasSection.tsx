@@ -197,13 +197,13 @@ export function MediasSection({ onSelectMedia }: MediasSectionProps) {
             Précédent
           </Button>
           <span className="text-sm text-muted-foreground">
-            Page {page} sur {mediasData.pagination.totalPages}
+            Page {page} sur {mediasData.pagination.pages}
           </span>
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setPage(p => Math.min(mediasData.pagination.totalPages, p + 1))}
-            disabled={page === mediasData.pagination.totalPages}
+            onClick={() => setPage(p => Math.min(mediasData.pagination.pages, p + 1))}
+            disabled={page === mediasData.pagination.pages}
           >
             Suivant
             <ChevronRight className="h-4 w-4 ml-1" />
