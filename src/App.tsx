@@ -8,6 +8,7 @@ import { ReseauSection } from '@/sections/ReseauSection';
 import { Footer } from '@/sections/Footer';
 import { Toaster } from '@/components/ui/sonner';
 import { SEO } from '@/components/SEO';
+import { PrivacyDialog } from '@/components/PrivacyDialog';
 import { sectionSEO, createWebsiteJsonLd, createSoftwareApplicationJsonLd } from '@/config/seo';
 
 type TabType = 'dashboard' | 'medias' | 'personnes' | 'organisations' | 'reseau';
@@ -60,6 +61,7 @@ function App() {
       </main>
       <Footer />
       <Toaster />
+      <PrivacyDialog />
     </div>
   );
 }
