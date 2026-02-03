@@ -346,6 +346,9 @@ interface MediaCardProps {
 function MediaCard({ media, onClick }: MediaCardProps) {
   const TypeIcon = TYPE_ICONS[media.type] || BookOpen;
   const typeColorClass = TYPE_COLORS[media.type] || 'bg-gray-100 text-gray-700';
+  
+  // Mode simplifié pour les résultats de recherche (données partielles)
+  const isSearchResult = media.proprietaires === undefined;
 
   return (
     <Card 
@@ -357,12 +360,14 @@ function MediaCard({ media, onClick }: MediaCardProps) {
           <div className={`p-2 rounded-lg ${typeColorClass}`}>
             <TypeIcon className="h-5 w-5" />
           </div>
-          <Badge variant={media.prix === 'Gratuit' ? 'default' : 'secondary'}>
-            {media.prix || '?'}
-          </Badge>
+          {!isSearchResult && (
+            <Badge variant={media.prix === 'Gratuit' ? 'default' : 'secondary'}>
+              {media.prix || 'Non défini'}
+            </Badge>
+          )}
         </div>
         
-        <h3 className="font-semibold text-lg mb-1 line-clamp-2">{media.nom}</h3>
+        <h3 className={`font-semibold text-lg mb-1 line-clamp-2 ${isSearchResult ? 'mb-3' : ''}`}>{media.nom}</h3>
         
         <div className="flex items-center gap-2 mb-3">
           <Badge variant="outline" className="text-xs">
@@ -375,15 +380,17 @@ function MediaCard({ media, onClick }: MediaCardProps) {
           )}
         </div>
         
-        <div className="text-sm text-muted-foreground">
-          {media.proprietaires.length > 0 ? (
-            <p className="line-clamp-1">
-              {media.proprietaires.map(p => p.nom).join(', ')}
-            </p>
-          ) : (
-            <p>Propriétaire inconnu</p>
-          )}
-        </div>
+        {!isSearchResult && (
+          <div className="text-sm text-muted-foreground">
+            {media.proprietaires?.length > 0 ? (
+              <p className="line-clamp-1">
+                {media.proprietaires.map(p => p.nom).join(', ')}
+              </p>
+            ) : (
+              <p>Propriétaire inconnu</p>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
