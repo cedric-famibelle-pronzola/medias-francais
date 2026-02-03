@@ -87,4 +87,4 @@ Ce projet est distribué sous licence **AGPL-3.0** (GNU Affero General Public Li
 - **API & Logs** : Deno Land Inc. (USA) via Deno Deploy
 - **Base de données (production)** : Neon (neon.tech) - PostgreSQL serverless
 
-Consultez le fichier `PRIVACY.md` du projet API pour plus de détails sur le traitement des données.
+Consultez le fichier [`PRIVACY.md`](https://github.com/cedric-famibelle-pronzola/medias-francais-api/blob/master/PRIVACY.md) du projet API pour plus de détails sur le traitement des données.
