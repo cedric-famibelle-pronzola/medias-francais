@@ -1014,6 +1014,33 @@ export function ReseauSection() {
 
                     <Separator />
 
+                    <InfoSection title="Médias via organisations" icon={Building2}>
+                      {((selectedNode.data as Personne).mediasViaOrganisations?.length || 0) === 0 ? (
+                        <p className="text-sm text-muted-foreground">Aucun média via organisations</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {(selectedNode.data as Personne).mediasViaOrganisations?.map((media, idx) => (
+                            <div key={idx} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                              <div>
+                                <span className="font-medium">{media.nom}</span>
+                                {media.via && (
+                                  <p className="text-xs text-muted-foreground mt-0.5">
+                                    via {media.via}
+                                  </p>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline" className="text-xs">{media.type}</Badge>
+                                <Badge variant="outline" className="text-xs">{media.valeur}</Badge>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </InfoSection>
+
+                    <Separator />
+
                     <InfoSection title="Organisations" icon={Building2}>
                       {((selectedNode.data as Personne).organisations?.length || 0) === 0 ? (
                         <p className="text-sm text-muted-foreground">Aucune organisation</p>
