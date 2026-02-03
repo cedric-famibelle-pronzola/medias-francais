@@ -190,9 +190,9 @@ export function OrganisationsSection({ onSelectOrganisation }: OrganisationsSect
                 <div>
                   <h4 className="font-semibold mb-3 flex items-center gap-2">
                     <Users className="h-4 w-4" />
-                    Propriétaires ({selectedOrg.proprietaires.length})
+                    Propriétaires ({selectedOrg.proprietaires?.length || 0})
                   </h4>
-                  {selectedOrg.proprietaires.length === 0 ? (
+                  {selectedOrg.proprietaires?.length === 0 ? (
                     <p className="text-sm text-muted-foreground">Aucun propriétaire connu</p>
                   ) : (
                     <div className="space-y-2">
@@ -294,7 +294,7 @@ function OrganisationCard({ organisation, onClick }: OrganisationCardProps) {
         <div className="flex items-center gap-4 text-sm text-muted-foreground">
           <span className="flex items-center gap-1" title="Propriétaires">
             <Users className="h-4 w-4" />
-            {organisation.proprietaires.length}
+            {organisation.proprietaires?.length || 0}
           </span>
           <span className="flex items-center gap-1" title="Filiales">
             <Network className="h-4 w-4" />

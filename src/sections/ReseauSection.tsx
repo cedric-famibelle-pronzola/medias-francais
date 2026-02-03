@@ -703,7 +703,7 @@ export function ReseauSection() {
                     <Separator />
 
                     <InfoSection title="Propriétaires directs" icon={Users}>
-                      {(selectedNode.data as Media).proprietaires.length === 0 ? (
+                      {(selectedNode.data as Media).proprietaires?.length === 0 ? (
                         <p className="text-sm text-muted-foreground">Aucun propriétaire connu</p>
                       ) : (
                         <div className="space-y-2">
@@ -725,7 +725,7 @@ export function ReseauSection() {
                       )}
                     </InfoSection>
 
-                    {(selectedNode.data as Media).chaineProprietaires.length > 0 && (
+                    {(selectedNode.data as Media).chaineProprietaires?.length > 0 && (
                       <>
                         <Separator />
                         <InfoSection title="Chaîne de propriété" icon={ChevronRight}>
@@ -810,7 +810,7 @@ export function ReseauSection() {
                     )}
 
                     <InfoSection title="Propriétaires" icon={Users}>
-                      {(selectedNode.data as Organisation).proprietaires.length === 0 ? (
+                      {(selectedNode.data as Organisation).proprietaires?.length === 0 ? (
                         <p className="text-sm text-muted-foreground">Aucun propriétaire connu</p>
                       ) : (
                         <div className="space-y-2">
