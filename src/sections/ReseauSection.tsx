@@ -510,6 +510,60 @@ export function ReseauSection() {
     setIsPanning(false);
   }, []);
 
+  // Gestionnaires tactiles pour mobile
+  const handleTouchStart = useCallback((e: React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const { x, y } = screenToCanvas(touch.clientX, touch.clientY);
+    lastMousePos.current = { x: touch.clientX, y: touch.clientY };
+
+    // Mode pan par défaut sur mobile, ou si explicitement sélectionné
+    if (toolModeRef.current === 'pan') {
+      setIsPanning(true);
+      return;
+    }
+
+    const clickedNode = nodesRef.current.find(node => {
+      const dx = node.x - x;
+      const dy = node.y - y;
+      return Math.sqrt(dx * dx + dy * dy) < node.radius;
+    });
+
+    if (clickedNode) {
+      setDragging(clickedNode.id);
+      setSelectedNode(clickedNode);
+    } else {
+      // Sur mobile, si on ne clique pas sur un nœud, on active le pan
+      setIsPanning(true);
+      setSelectedNode(null);
+    }
+  }, [screenToCanvas]);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent<HTMLCanvasElement>) => {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const { x, y } = screenToCanvas(touch.clientX, touch.clientY);
+
+    if (draggingRef.current && toolModeRef.current === 'select') {
+      setNodes(prev => prev.map(node => 
+        node.id === draggingRef.current ? { ...node, x, y, vx: 0, vy: 0 } : node
+      ));
+    } else if (isPanningRef.current) {
+      const dx = touch.clientX - lastMousePos.current.x;
+      const dy = touch.clientY - lastMousePos.current.y;
+      setOffset(prev => ({
+        x: prev.x + dx,
+        y: prev.y + dy
+      }));
+      lastMousePos.current = { x: touch.clientX, y: touch.clientY };
+    }
+  }, [screenToCanvas]);
+
+  const handleTouchEnd = useCallback(() => {
+    setDragging(null);
+    setIsPanning(false);
+  }, []);
+
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
   }, []);
@@ -651,6 +705,9 @@ export function ReseauSection() {
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
               onContextMenu={handleContextMenu}
             />
           </CardContent>
