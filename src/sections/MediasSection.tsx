@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useMedias, useSearchMedias } from '@/hooks/useApi';
+import { useMedias, useSearchMedias, useMediaDetail } from '@/hooks/useApi';
 import type { Media } from '@/types';
 import { 
   Search, 
@@ -58,8 +58,9 @@ export function MediasSection({ onSelectMedia }: MediasSectionProps) {
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
-  const [selectedMedia, setSelectedMedia] = useState<Media | null>(null);
+  const [selectedMediaName, setSelectedMediaName] = useState<string | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const { data: selectedMedia, loading: detailLoading } = useMediaDetail(selectedMediaName);
   
   const limit = 24;
   
@@ -93,7 +94,7 @@ export function MediasSection({ onSelectMedia }: MediasSectionProps) {
   }, [mediasData]);
 
   const handleMediaClick = (media: Media) => {
-    setSelectedMedia(media);
+    setSelectedMediaName(media.nom);
     setDetailOpen(true);
     if (onSelectMedia) {
       onSelectMedia(media);
@@ -216,13 +217,17 @@ export function MediasSection({ onSelectMedia }: MediasSectionProps) {
         <DialogContent className="max-w-2xl max-h-[90vh]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              {selectedMedia && (
+              {detailLoading ? (
+                <span className="text-muted-foreground">Chargement...</span>
+              ) : selectedMedia ? (
                 <>
                   <Badge className={TYPE_COLORS[selectedMedia.type] || 'bg-gray-100'}>
                     {selectedMedia.type}
                   </Badge>
                   {selectedMedia.nom}
                 </>
+              ) : (
+                <span className="text-muted-foreground">{selectedMediaName}</span>
               )}
             </DialogTitle>
             <DialogDescription>
@@ -231,7 +236,19 @@ export function MediasSection({ onSelectMedia }: MediasSectionProps) {
           </DialogHeader>
           
           <ScrollArea className="max-h-[60vh]">
-            {selectedMedia && (
+            {detailLoading ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i}>
+                      <Skeleton className="h-4 w-20 mb-2" />
+                      <Skeleton className="h-6 w-32" />
+                    </div>
+                  ))}
+                </div>
+                <Skeleton className="h-20 w-full" />
+              </div>
+            ) : selectedMedia && (
               <div className="space-y-6">
                 {/* Info générales */}
                 <div className="grid grid-cols-2 gap-4">
@@ -265,7 +282,7 @@ export function MediasSection({ onSelectMedia }: MediasSectionProps) {
                     <Eye className="h-4 w-4" />
                     Propriétaires directs
                   </h4>
-                  {selectedMedia.proprietaires.length === 0 ? (
+                  {!selectedMedia.proprietaires || selectedMedia.proprietaires.length === 0 ? (
                     <p className="text-sm text-muted-foreground">Aucun propriétaire connu</p>
                   ) : (
                     <div className="space-y-2">
@@ -288,7 +305,7 @@ export function MediasSection({ onSelectMedia }: MediasSectionProps) {
                 </div>
 
                 {/* Chaîne de propriété */}
-                {selectedMedia.chaineProprietaires.length > 0 && (
+                {selectedMedia.chaineProprietaires?.length > 0 && (
                   <div>
                     <h4 className="font-semibold mb-3">Chaîne de propriété</h4>
                     <div className="space-y-3">
