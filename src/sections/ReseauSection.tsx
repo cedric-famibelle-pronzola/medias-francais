@@ -60,6 +60,13 @@ interface Edge {
 const CANVAS_WIDTH = 800;
 const CANVAS_HEIGHT = 600;
 
+// Détection mobile pour optimisations
+const isMobile = typeof window !== 'undefined' && 
+  /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+// Limiter le framerate sur mobile pour économiser la batterie
+const FRAME_INTERVAL = isMobile ? 33 : 16; // ~30fps mobile, ~60fps desktop
+
 type ToolMode = 'select' | 'pan';
 
 export function ReseauSection() {
@@ -76,6 +83,8 @@ export function ReseauSection() {
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
   const animationRef = useRef<number | null>(null);
   const lastMousePos = useRef({ x: 0, y: 0 });
+  const lastFrameTime = useRef<number>(0);
+  const stabilityCounter = useRef<number>(0);
   
   // Refs pour éviter les problèmes de closure
   const scaleRef = useRef(scale);
@@ -91,6 +100,87 @@ export function ReseauSection() {
   useEffect(() => { isPanningRef.current = isPanning; }, [isPanning]);
   useEffect(() => { nodesRef.current = nodes; }, [nodes]);
   useEffect(() => { toolModeRef.current = toolMode; }, [toolMode]);
+
+  // Redémarrer la simulation quand on interagit (drag/pan)
+  useEffect(() => {
+    if ((dragging || isPanning) && !animationRef.current) {
+      stabilityCounter.current = 0;
+      const simulate = (timestamp: number) => {
+        const elapsed = timestamp - lastFrameTime.current;
+        if (elapsed < FRAME_INTERVAL) {
+          animationRef.current = requestAnimationFrame(simulate);
+          return;
+        }
+        lastFrameTime.current = timestamp;
+
+        setNodes(prevNodes => {
+          const newNodes = [...prevNodes];
+          const currentDragging = draggingRef.current;
+          
+          // Forces de répulsion (simplifiées)
+          for (let i = 0; i < newNodes.length; i += isMobile ? 2 : 1) {
+            for (let j = i + 1; j < newNodes.length; j += isMobile ? 2 : 1) {
+              const dx = newNodes[j].x - newNodes[i].x;
+              const dy = newNodes[j].y - newNodes[i].y;
+              const distSq = dx * dx + dy * dy;
+              const dist = Math.sqrt(distSq) || 1;
+              const force = (isMobile ? 1000 : 2000) / (distSq + 100);
+              
+              const fx = (dx / dist) * force;
+              const fy = (dy / dist) * force;
+              
+              newNodes[i].vx -= fx;
+              newNodes[i].vy -= fy;
+              newNodes[j].vx += fx;
+              newNodes[j].vy += fy;
+            }
+          }
+
+          // Forces des edges
+          const edgesToProcess = isMobile ? edges.slice(0, 50) : edges;
+          edgesToProcess.forEach(edge => {
+            const source = newNodes.find(n => n.id === edge.source);
+            const target = newNodes.find(n => n.id === edge.target);
+            if (source && target) {
+              const dx = target.x - source.x;
+              const dy = target.y - source.y;
+              const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+              const force = (dist - 100) * 0.01;
+              
+              source.vx += (dx / dist) * force;
+              source.vy += (dy / dist) * force;
+              target.vx -= (dx / dist) * force;
+              target.vy -= (dy / dist) * force;
+            }
+          });
+
+          // Gravité et friction
+          const gravityStrength = isMobile ? 0.0005 : 0.001;
+          newNodes.forEach(node => {
+            if (currentDragging !== node.id) {
+              const dx = CANVAS_WIDTH / 2 - node.x;
+              const dy = CANVAS_HEIGHT / 2 - node.y;
+              node.vx += dx * gravityStrength;
+              node.vy += dy * gravityStrength;
+              node.vx *= isMobile ? 0.85 : 0.9;
+              node.vy *= isMobile ? 0.85 : 0.9;
+              node.x += node.vx;
+              node.y += node.vy;
+            }
+          });
+
+          return newNodes;
+        });
+
+        if (draggingRef.current || isPanningRef.current) {
+          animationRef.current = requestAnimationFrame(simulate);
+        } else {
+          animationRef.current = null;
+        }
+      };
+      animationRef.current = requestAnimationFrame(simulate);
+    }
+  }, [dragging, isPanning, edges]);
 
   const { data: mediasData, loading: mediasLoading } = useMedias(1, 50);
   const { data: personnesData, loading: personnesLoading } = usePersonnes(1, 50);
@@ -199,21 +289,41 @@ export function ReseauSection() {
     setEdges(newEdges);
   }, [mediasData, personnesData, orgsData]);
 
-  // Simulation physique
+  // Simulation physique optimisée
   useEffect(() => {
     if (nodes.length === 0) return;
 
-    const simulate = () => {
+    let isActive = true;
+    stabilityCounter.current = 0;
+
+    const simulate = (timestamp: number) => {
+      if (!isActive) return;
+
+      // Limiter le framerate
+      const elapsed = timestamp - lastFrameTime.current;
+      if (elapsed < FRAME_INTERVAL) {
+        animationRef.current = requestAnimationFrame(simulate);
+        return;
+      }
+      lastFrameTime.current = timestamp;
+
       setNodes(prevNodes => {
         const newNodes = [...prevNodes];
         const currentDragging = draggingRef.current;
+        let totalMovement = 0;
         
-        for (let i = 0; i < newNodes.length; i++) {
-          for (let j = i + 1; j < newNodes.length; j++) {
+        // Optimisation: moins de calculs sur mobile
+        const nodeCount = newNodes.length;
+        const sampleRate = isMobile && nodeCount > 30 ? 2 : 1;
+        
+        for (let i = 0; i < nodeCount; i += sampleRate) {
+          for (let j = i + 1; j < nodeCount; j += sampleRate) {
             const dx = newNodes[j].x - newNodes[i].x;
             const dy = newNodes[j].y - newNodes[i].y;
-            const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-            const force = 2000 / (dist * dist);
+            const distSq = dx * dx + dy * dy;
+            const dist = Math.sqrt(distSq) || 1;
+            // Force plus faible sur mobile pour réduire les oscillations
+            const force = (isMobile ? 1000 : 2000) / (distSq + 100);
             
             const fx = (dx / dist) * force;
             const fy = (dy / dist) * force;
@@ -225,7 +335,9 @@ export function ReseauSection() {
           }
         }
 
-        edges.forEach(edge => {
+        // Optimisation: limiter le nombre d'edges traités sur mobile
+        const edgesToProcess = isMobile ? edges.slice(0, 100) : edges;
+        edgesToProcess.forEach(edge => {
           const source = newNodes.find(n => n.id === edge.source);
           const target = newNodes.find(n => n.id === edge.target);
           if (source && target) {
@@ -244,31 +356,60 @@ export function ReseauSection() {
           }
         });
 
+        // Force de gravité vers le centre (plus faible sur mobile)
+        const gravityStrength = isMobile ? 0.0005 : 0.001;
         newNodes.forEach(node => {
           const dx = CANVAS_WIDTH / 2 - node.x;
           const dy = CANVAS_HEIGHT / 2 - node.y;
-          node.vx += dx * 0.001;
-          node.vy += dy * 0.001;
+          node.vx += dx * gravityStrength;
+          node.vy += dy * gravityStrength;
         });
 
+        // Appliquer la friction et mettre à jour les positions
         newNodes.forEach(node => {
           if (currentDragging !== node.id) {
-            node.vx *= 0.9;
-            node.vy *= 0.9;
-            node.x += node.vx;
-            node.y += node.vy;
+            // Friction plus élevée sur mobile pour stabiliser plus vite
+            node.vx *= isMobile ? 0.85 : 0.9;
+            node.vy *= isMobile ? 0.85 : 0.9;
+            
+            const moveX = node.vx;
+            const moveY = node.vy;
+            
+            node.x += moveX;
+            node.y += moveY;
+            
+            totalMovement += Math.abs(moveX) + Math.abs(moveY);
           }
         });
+
+        // Détection de stabilité: si peu de mouvement, réduire le framerate
+        if (totalMovement < (isMobile ? 5 : 1)) {
+          stabilityCounter.current++;
+        } else {
+          stabilityCounter.current = 0;
+        }
 
         return newNodes;
       });
 
-      animationRef.current = requestAnimationFrame(simulate);
+      // Si stable depuis longtemps, ralentir drastiquement
+      const stableDelay = stabilityCounter.current > (isMobile ? 30 : 60);
+      if (stableDelay) {
+        // Redémarrer seulement si nécessaire (drag, etc)
+        if (draggingRef.current || isPanningRef.current) {
+          stabilityCounter.current = 0;
+          animationRef.current = requestAnimationFrame(simulate);
+        }
+        // Sinon on s'arrête, le rendu se fera quand même via useEffect
+      } else {
+        animationRef.current = requestAnimationFrame(simulate);
+      }
     };
 
     animationRef.current = requestAnimationFrame(simulate);
 
     return () => {
+      isActive = false;
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
       }
@@ -700,7 +841,11 @@ export function ReseauSection() {
                 "w-full touch-none",
                 toolMode === 'pan' ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
               )}
-              style={{ background: '#f8fafc' }}
+              style={{ 
+                background: '#f8fafc',
+                willChange: 'transform',
+                imageRendering: 'crisp-edges'
+              }}
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
