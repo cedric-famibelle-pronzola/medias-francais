@@ -416,7 +416,7 @@ export function ReseauSection() {
     };
   }, [nodes.length, edges]);
 
-  // Dessiner le canvas
+  // Dessiner le canvas - utilise les refs pour permettre le rendu hors React
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -651,19 +651,28 @@ export function ReseauSection() {
     setIsPanning(false);
   }, []);
 
-  // Gestionnaires tactiles pour mobile
+  // Gestionnaires tactiles pour mobile - Optimisés pour Firefox
+  // Sur Firefox mobile, on évite les setState pendant le mouvement pour ne pas bloquer
+  const touchStartPos = useRef({ x: 0, y: 0 });
+  const touchStartOffset = useRef({ x: 0, y: 0 });
+  const panDelta = useRef({ x: 0, y: 0 });
+  
   const handleTouchStart = useCallback((e: React.TouchEvent<HTMLCanvasElement>) => {
-    e.preventDefault();
+    if (e.touches.length > 1) return;
+    
     const touch = e.touches[0];
-    const { x, y } = screenToCanvas(touch.clientX, touch.clientY);
+    touchStartPos.current = { x: touch.clientX, y: touch.clientY };
+    touchStartOffset.current = { ...offsetRef.current };
+    panDelta.current = { x: 0, y: 0 };
     lastMousePos.current = { x: touch.clientX, y: touch.clientY };
 
-    // Mode pan par défaut sur mobile, ou si explicitement sélectionné
     if (toolModeRef.current === 'pan') {
       setIsPanning(true);
+      isPanningRef.current = true;
       return;
     }
 
+    const { x, y } = screenToCanvas(touch.clientX, touch.clientY);
     const clickedNode = nodesRef.current.find(node => {
       const dx = node.x - x;
       const dy = node.y - y;
@@ -674,35 +683,54 @@ export function ReseauSection() {
       setDragging(clickedNode.id);
       setSelectedNode(clickedNode);
     } else {
-      // Sur mobile, si on ne clique pas sur un nœud, on active le pan
       setIsPanning(true);
+      isPanningRef.current = true;
       setSelectedNode(null);
     }
   }, [screenToCanvas]);
 
   const handleTouchMove = useCallback((e: React.TouchEvent<HTMLCanvasElement>) => {
-    e.preventDefault();
+    if (e.touches.length > 1) return;
+    
     const touch = e.touches[0];
-    const { x, y } = screenToCanvas(touch.clientX, touch.clientY);
-
+    
     if (draggingRef.current && toolModeRef.current === 'select') {
+      // Pour le drag de nœud, on doit mettre à jour le state
+      const { x, y } = screenToCanvas(touch.clientX, touch.clientY);
       setNodes(prev => prev.map(node => 
         node.id === draggingRef.current ? { ...node, x, y, vx: 0, vy: 0 } : node
       ));
     } else if (isPanningRef.current) {
-      const dx = touch.clientX - lastMousePos.current.x;
-      const dy = touch.clientY - lastMousePos.current.y;
-      setOffset(prev => ({
-        x: prev.x + dx,
-        y: prev.y + dy
-      }));
-      lastMousePos.current = { x: touch.clientX, y: touch.clientY };
+      // Pour le pan sur Firefox mobile : utiliser CSS transform (GPU accelerated)
+      const dx = touch.clientX - touchStartPos.current.x;
+      const dy = touch.clientY - touchStartPos.current.y;
+      
+      // Stocker le delta final pour le touchEnd
+      panDelta.current = { x: dx, y: dy };
+      
+      // Appliquer directement via CSS - ultra rapide, pas de re-render React
+      const canvas = canvasRef.current;
+      if (canvas) {
+        canvas.style.transform = `translate(${dx}px, ${dy}px)`;
+      }
     }
   }, [screenToCanvas]);
 
   const handleTouchEnd = useCallback(() => {
+    // Synchroniser l'offset avec le state React
+    if (isPanningRef.current) {
+      const canvas = canvasRef.current;
+      if (canvas) {
+        canvas.style.transform = ''; // Reset CSS transform
+      }
+      setOffset({
+        x: touchStartOffset.current.x + panDelta.current.x,
+        y: touchStartOffset.current.y + panDelta.current.y
+      });
+    }
     setDragging(null);
     setIsPanning(false);
+    isPanningRef.current = false;
   }, []);
 
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
