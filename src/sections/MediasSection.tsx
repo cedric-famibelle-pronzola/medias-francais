@@ -369,12 +369,12 @@ function MediaCard({ media, onClick }: MediaCardProps) {
         
         <h3 className={`font-semibold text-lg mb-1 line-clamp-2 ${isSearchResult ? 'mb-3' : ''}`}>{media.nom}</h3>
         
-        <div className="flex items-center gap-2 mb-3">
-          <Badge variant="outline" className="text-xs">
+        <div className="flex flex-wrap items-center gap-2 mb-3">
+          <Badge variant="outline" className="text-xs max-w-full truncate">
             {media.type}
           </Badge>
           {media.echelle && (
-            <Badge variant="outline" className="text-xs">
+            <Badge variant="outline" className="text-xs max-w-full truncate">
               {media.echelle}
             </Badge>
           )}
