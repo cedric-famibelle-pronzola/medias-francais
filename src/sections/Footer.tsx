@@ -142,7 +142,16 @@ export function Footer() {
 
                       <p>
                         Pour plus de détails, consultez le fichier{' '}
-                        <code className="bg-muted px-1 py-0.5 rounded text-xs">PRIVACY.md</code> du projet API.
+                        <a 
+                          href="https://github.com/cedric-famibelle-pronzola/medias-francais-api/blob/master/PRIVACY.md"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-primary hover:underline"
+                        >
+                          <code className="bg-muted px-1 py-0.5 rounded text-xs">PRIVACY.md</code>
+                          <ExternalLink className="h-3 w-3" />
+                        </a>{' '}
+                        du projet API.
                       </p>
                     </div>
                   </DialogDescription>
