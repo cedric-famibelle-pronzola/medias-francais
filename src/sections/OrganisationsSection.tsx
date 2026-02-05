@@ -30,9 +30,12 @@ import { AlertCircle } from 'lucide-react';
 interface OrganisationsSectionProps {
   onSelectOrganisation?: (org: Organisation) => void;
   initialOrganisation?: Organisation | null;
+  onNavigateToPersonne?: (nom: string) => void;
+  onNavigateToMedia?: (nom: string) => void;
+  onNavigateToOrganisation?: (nom: string) => void;
 }
 
-export function OrganisationsSection({ onSelectOrganisation, initialOrganisation }: OrganisationsSectionProps) {
+export function OrganisationsSection({ onSelectOrganisation, initialOrganisation, onNavigateToPersonne, onNavigateToMedia, onNavigateToOrganisation }: OrganisationsSectionProps) {
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOrg, setSelectedOrg] = useState<Organisation | null>(initialOrganisation || null);
@@ -206,7 +209,23 @@ export function OrganisationsSection({ onSelectOrganisation, initialOrganisation
                             <Badge variant={prop.type === 'personne' ? 'default' : 'secondary'}>
                               {prop.type === 'personne' ? 'Personne' : 'Organisation'}
                             </Badge>
-                            <span className="font-medium">{prop.nom}</span>
+                            {prop.type === 'personne' && onNavigateToPersonne ? (
+                              <button
+                                onClick={() => onNavigateToPersonne(prop.nom)}
+                                className="font-medium text-primary hover:underline text-left"
+                              >
+                                {prop.nom}
+                              </button>
+                            ) : prop.type === 'organisation' && onNavigateToOrganisation ? (
+                              <button
+                                onClick={() => onNavigateToOrganisation(prop.nom)}
+                                className="font-medium text-primary hover:underline text-left"
+                              >
+                                {prop.nom}
+                              </button>
+                            ) : (
+                              <span className="font-medium">{prop.nom}</span>
+                            )}
                           </div>
                           <Badge variant="outline">{prop.valeur}</Badge>
                         </div>
@@ -230,7 +249,16 @@ export function OrganisationsSection({ onSelectOrganisation, initialOrganisation
                           key={idx} 
                           className="flex items-center justify-between p-3 bg-muted rounded-lg"
                         >
-                          <span className="font-medium">{fil.nom}</span>
+                          {onNavigateToOrganisation ? (
+                            <button
+                              onClick={() => onNavigateToOrganisation(fil.nom)}
+                              className="font-medium text-primary hover:underline text-left"
+                            >
+                              {fil.nom}
+                            </button>
+                          ) : (
+                            <span className="font-medium">{fil.nom}</span>
+                          )}
                           {fil.valeur && <Badge variant="outline">{fil.valeur}</Badge>}
                         </div>
                       ))}
@@ -254,7 +282,16 @@ export function OrganisationsSection({ onSelectOrganisation, initialOrganisation
                           className="flex items-center justify-between p-3 bg-muted rounded-lg"
                         >
                           <div>
-                            <p className="font-medium">{media.nom}</p>
+                            {onNavigateToMedia ? (
+                              <button
+                                onClick={() => onNavigateToMedia(media.nom)}
+                                className="font-medium text-primary hover:underline text-left"
+                              >
+                                {media.nom}
+                              </button>
+                            ) : (
+                              <p className="font-medium">{media.nom}</p>
+                            )}
                             <p className="text-xs text-muted-foreground">{media.type}</p>
                           </div>
                           <Badge variant="outline">{media.valeur}</Badge>
