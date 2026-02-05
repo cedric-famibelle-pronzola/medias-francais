@@ -45,16 +45,51 @@ function App() {
     setActiveTab('organisations');
   };
 
+  // Navigation depuis les fiches détail
+  const handleNavigateToPersonne = (nom: string) => {
+    setSelectedPersonne({ nom } as Personne);
+    setActiveTab('personnes');
+  };
+
+  const handleNavigateToOrganisation = (nom: string) => {
+    setSelectedOrg({ nom } as Organisation);
+    setActiveTab('organisations');
+  };
+
+  const handleNavigateToMedia = (nom: string) => {
+    setSelectedMedia({ nom } as Media);
+    setActiveTab('medias');
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
         return <Dashboard />;
       case 'medias':
-        return <MediasSection initialMedia={selectedMedia} />;
+        return (
+          <MediasSection 
+            initialMedia={selectedMedia}
+            onNavigateToPersonne={handleNavigateToPersonne}
+            onNavigateToOrganisation={handleNavigateToOrganisation}
+          />
+        );
       case 'personnes':
-        return <PersonnesSection initialPersonne={selectedPersonne} />;
+        return (
+          <PersonnesSection 
+            initialPersonne={selectedPersonne}
+            onNavigateToMedia={handleNavigateToMedia}
+            onNavigateToOrganisation={handleNavigateToOrganisation}
+          />
+        );
       case 'organisations':
-        return <OrganisationsSection initialOrganisation={selectedOrg} />;
+        return (
+          <OrganisationsSection 
+            initialOrganisation={selectedOrg}
+            onNavigateToPersonne={handleNavigateToPersonne}
+            onNavigateToMedia={handleNavigateToMedia}
+            onNavigateToOrganisation={handleNavigateToOrganisation}
+          />
+        );
       case 'reseau':
         return <ReseauSection />;
       default:
