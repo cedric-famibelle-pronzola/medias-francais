@@ -91,7 +91,13 @@ function App() {
           />
         );
       case 'reseau':
-        return <ReseauSection />;
+        return (
+          <ReseauSection 
+            onNavigateToMedia={handleNavigateToMedia}
+            onNavigateToPersonne={handleNavigateToPersonne}
+            onNavigateToOrganisation={handleNavigateToOrganisation}
+          />
+        );
       default:
         return <Dashboard />;
     }

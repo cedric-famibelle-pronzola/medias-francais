@@ -71,7 +71,17 @@ const FRAME_INTERVAL = isMobile ? 33 : 16; // ~30fps mobile, ~60fps desktop
 
 type ToolMode = 'select' | 'pan';
 
-export function ReseauSection() {
+interface ReseauSectionProps {
+  onNavigateToMedia?: (nom: string) => void;
+  onNavigateToPersonne?: (nom: string) => void;
+  onNavigateToOrganisation?: (nom: string) => void;
+}
+
+export function ReseauSection({ 
+  onNavigateToMedia, 
+  onNavigateToPersonne, 
+  onNavigateToOrganisation 
+}: ReseauSectionProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
@@ -1017,7 +1027,23 @@ export function ReseauSection() {
                                 <Badge variant={prop.type === 'personne' ? 'default' : 'secondary'}>
                                   {prop.type === 'personne' ? 'Personne' : 'Organisation'}
                                 </Badge>
-                                <span className="font-medium">{prop.nom}</span>
+                                {prop.type === 'personne' && onNavigateToPersonne ? (
+                                  <button
+                                    onClick={() => onNavigateToPersonne(prop.nom)}
+                                    className="font-medium text-primary hover:underline text-left"
+                                  >
+                                    {prop.nom}
+                                  </button>
+                                ) : prop.type === 'organisation' && onNavigateToOrganisation ? (
+                                  <button
+                                    onClick={() => onNavigateToOrganisation(prop.nom)}
+                                    className="font-medium text-primary hover:underline text-left"
+                                  >
+                                    {prop.nom}
+                                  </button>
+                                ) : (
+                                  <span className="font-medium">{prop.nom}</span>
+                                )}
                               </div>
                               <Badge variant="outline">{prop.valeur}</Badge>
                             </div>
@@ -1036,7 +1062,16 @@ export function ReseauSection() {
                                 <div className="flex items-center gap-2 flex-wrap">
                                   {chaine.chemin.map((nom, i) => (
                                     <span key={i} className="flex items-center text-sm">
-                                      <span className="font-medium">{nom}</span>
+                                      {onNavigateToPersonne ? (
+                                        <button
+                                          onClick={() => onNavigateToPersonne(nom)}
+                                          className="font-medium text-primary hover:underline text-left"
+                                        >
+                                          {nom}
+                                        </button>
+                                      ) : (
+                                        <span className="font-medium">{nom}</span>
+                                      )}
                                       {i < chaine.chemin.length - 1 && (
                                         <ChevronRight className="h-4 w-4 mx-1 text-muted-foreground" />
                                       )}
@@ -1072,7 +1107,16 @@ export function ReseauSection() {
                         <div className="space-y-2">
                           {(selectedNode.data as Personne).mediasDirects?.map((media, idx) => (
                             <div key={idx} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                              <span className="font-medium">{media.nom}</span>
+                              {onNavigateToMedia ? (
+                                <button
+                                  onClick={() => onNavigateToMedia(media.nom)}
+                                  className="font-medium text-primary hover:underline text-left"
+                                >
+                                  {media.nom}
+                                </button>
+                              ) : (
+                                <span className="font-medium">{media.nom}</span>
+                              )}
                               <div className="flex items-center gap-2">
                                 <Badge variant="outline" className="text-xs">{media.type}</Badge>
                                 <Badge variant="outline" className="text-xs">{media.valeur}</Badge>
@@ -1093,7 +1137,16 @@ export function ReseauSection() {
                           {(selectedNode.data as Personne).mediasViaOrganisations?.map((media, idx) => (
                             <div key={idx} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                               <div>
-                                <span className="font-medium">{media.nom}</span>
+                                {onNavigateToMedia ? (
+                                  <button
+                                    onClick={() => onNavigateToMedia(media.nom)}
+                                    className="font-medium text-primary hover:underline text-left"
+                                  >
+                                    {media.nom}
+                                  </button>
+                                ) : (
+                                  <span className="font-medium">{media.nom}</span>
+                                )}
                                 {media.via && (
                                   <p className="text-xs text-muted-foreground mt-0.5">
                                     via {media.via}
@@ -1119,7 +1172,16 @@ export function ReseauSection() {
                         <div className="space-y-2">
                           {(selectedNode.data as Personne).organisations?.map((org, idx) => (
                             <div key={idx} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                              <span className="font-medium">{org.nom}</span>
+                              {onNavigateToOrganisation ? (
+                                <button
+                                  onClick={() => onNavigateToOrganisation(org.nom)}
+                                  className="font-medium text-primary hover:underline text-left"
+                                >
+                                  {org.nom}
+                                </button>
+                              ) : (
+                                <span className="font-medium">{org.nom}</span>
+                              )}
                               <Badge variant="outline">{org.valeur}</Badge>
                             </div>
                           ))}
@@ -1148,7 +1210,23 @@ export function ReseauSection() {
                                 <Badge variant={prop.type === 'personne' ? 'default' : 'secondary'}>
                                   {prop.type === 'personne' ? 'Personne' : 'Organisation'}
                                 </Badge>
-                                <span className="font-medium">{prop.nom}</span>
+                                {prop.type === 'personne' && onNavigateToPersonne ? (
+                                  <button
+                                    onClick={() => onNavigateToPersonne(prop.nom)}
+                                    className="font-medium text-primary hover:underline text-left"
+                                  >
+                                    {prop.nom}
+                                  </button>
+                                ) : prop.type === 'organisation' && onNavigateToOrganisation ? (
+                                  <button
+                                    onClick={() => onNavigateToOrganisation(prop.nom)}
+                                    className="font-medium text-primary hover:underline text-left"
+                                  >
+                                    {prop.nom}
+                                  </button>
+                                ) : (
+                                  <span className="font-medium">{prop.nom}</span>
+                                )}
                               </div>
                               <Badge variant="outline">{prop.valeur}</Badge>
                             </div>
@@ -1166,7 +1244,16 @@ export function ReseauSection() {
                         <div className="space-y-2">
                           {(selectedNode.data as Organisation).filiales.map((fil, idx) => (
                             <div key={idx} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                              <span className="font-medium">{fil.nom}</span>
+                              {onNavigateToOrganisation ? (
+                                <button
+                                  onClick={() => onNavigateToOrganisation(fil.nom)}
+                                  className="font-medium text-primary hover:underline text-left"
+                                >
+                                  {fil.nom}
+                                </button>
+                              ) : (
+                                <span className="font-medium">{fil.nom}</span>
+                              )}
                               {fil.valeur && <Badge variant="outline">{fil.valeur}</Badge>}
                             </div>
                           ))}
@@ -1184,7 +1271,16 @@ export function ReseauSection() {
                           {(selectedNode.data as Organisation).medias.map((media, idx) => (
                             <div key={idx} className="flex items-center justify-between p-3 bg-muted rounded-lg">
                               <div>
-                                <p className="font-medium">{media.nom}</p>
+                                {onNavigateToMedia ? (
+                                  <button
+                                    onClick={() => onNavigateToMedia(media.nom)}
+                                    className="font-medium text-primary hover:underline text-left"
+                                  >
+                                    {media.nom}
+                                  </button>
+                                ) : (
+                                  <p className="font-medium">{media.nom}</p>
+                                )}
                                 <p className="text-xs text-muted-foreground">{media.type}</p>
                               </div>
                               <Badge variant="outline">{media.valeur}</Badge>
