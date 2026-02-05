@@ -9,12 +9,18 @@ import { Footer } from '@/sections/Footer';
 import { Toaster } from '@/components/ui/sonner';
 import { SEO } from '@/components/SEO';
 import { PrivacyDialog } from '@/components/PrivacyDialog';
+import { CommandPalette } from '@/components/CommandPalette';
 import { sectionSEO, createWebsiteJsonLd, createSoftwareApplicationJsonLd } from '@/config/seo';
+import type { Media, Personne, Organisation } from '@/types';
 
 type TabType = 'dashboard' | 'medias' | 'personnes' | 'organisations' | 'reseau';
 
 function App() {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
+  const [commandOpen, setCommandOpen] = useState(false);
+  const [selectedMedia, setSelectedMedia] = useState<Media | null>(null);
+  const [selectedPersonne, setSelectedPersonne] = useState<Personne | null>(null);
+  const [selectedOrg, setSelectedOrg] = useState<Organisation | null>(null);
 
   const currentSEO = sectionSEO[activeTab];
   
@@ -24,16 +30,31 @@ function App() {
     createSoftwareApplicationJsonLd(),
   ];
 
+  const handleSelectMedia = (media: Media) => {
+    setSelectedMedia(media);
+    setActiveTab('medias');
+  };
+
+  const handleSelectPersonne = (personne: Personne) => {
+    setSelectedPersonne(personne);
+    setActiveTab('personnes');
+  };
+
+  const handleSelectOrganisation = (org: Organisation) => {
+    setSelectedOrg(org);
+    setActiveTab('organisations');
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard':
         return <Dashboard />;
       case 'medias':
-        return <MediasSection />;
+        return <MediasSection initialMedia={selectedMedia} />;
       case 'personnes':
-        return <PersonnesSection />;
+        return <PersonnesSection initialPersonne={selectedPersonne} />;
       case 'organisations':
-        return <OrganisationsSection />;
+        return <OrganisationsSection initialOrganisation={selectedOrg} />;
       case 'reseau':
         return <ReseauSection />;
       default:
@@ -51,17 +72,27 @@ function App() {
         title={currentSEO.title}
         description={currentSEO.description}
         keywords={currentSEO.keywords}
-        // Pas de canonical différent par onglet - c'est la même URL
         canonical="/"
         jsonLd={jsonLdData}
       />
-      <Header activeTab={activeTab} setActiveTab={handleTabChange} />
+      <Header 
+        activeTab={activeTab} 
+        setActiveTab={handleTabChange}
+        onSearch={() => setCommandOpen(true)}
+      />
       <main className="flex-1 pb-12">
         {renderContent()}
       </main>
       <Footer />
       <Toaster />
       <PrivacyDialog />
+      <CommandPalette
+        open={commandOpen}
+        onOpenChange={setCommandOpen}
+        onSelectMedia={handleSelectMedia}
+        onSelectPersonne={handleSelectPersonne}
+        onSelectOrganisation={handleSelectOrganisation}
+      />
     </div>
   );
 }
