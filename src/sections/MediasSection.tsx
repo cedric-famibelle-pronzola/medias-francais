@@ -53,9 +53,11 @@ const TYPE_COLORS: Record<string, string> = {
 interface MediasSectionProps {
   onSelectMedia?: (media: Media) => void;
   initialMedia?: Media | null;
+  onNavigateToPersonne?: (nom: string) => void;
+  onNavigateToOrganisation?: (nom: string) => void;
 }
 
-export function MediasSection({ onSelectMedia, initialMedia }: MediasSectionProps) {
+export function MediasSection({ onSelectMedia, initialMedia, onNavigateToPersonne, onNavigateToOrganisation }: MediasSectionProps) {
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -296,7 +298,23 @@ export function MediasSection({ onSelectMedia, initialMedia }: MediasSectionProp
                             <Badge variant={prop.type === 'personne' ? 'default' : 'secondary'}>
                               {prop.type === 'personne' ? 'Personne' : 'Organisation'}
                             </Badge>
-                            <span className="font-medium">{prop.nom}</span>
+                            {prop.type === 'personne' && onNavigateToPersonne ? (
+                              <button
+                                onClick={() => onNavigateToPersonne(prop.nom)}
+                                className="font-medium text-primary hover:underline text-left"
+                              >
+                                {prop.nom}
+                              </button>
+                            ) : prop.type === 'organisation' && onNavigateToOrganisation ? (
+                              <button
+                                onClick={() => onNavigateToOrganisation(prop.nom)}
+                                className="font-medium text-primary hover:underline text-left"
+                              >
+                                {prop.nom}
+                              </button>
+                            ) : (
+                              <span className="font-medium">{prop.nom}</span>
+                            )}
                           </div>
                           <Badge variant="outline">{prop.valeur}</Badge>
                         </div>
@@ -315,7 +333,16 @@ export function MediasSection({ onSelectMedia, initialMedia }: MediasSectionProp
                           <div className="flex items-center gap-2 flex-wrap">
                             {chaine.chemin.map((nom, i) => (
                               <span key={i} className="flex items-center">
-                                <span className="text-sm">{nom}</span>
+                                {onNavigateToPersonne ? (
+                                  <button
+                                    onClick={() => onNavigateToPersonne(nom)}
+                                    className="text-sm text-primary hover:underline"
+                                  >
+                                    {nom}
+                                  </button>
+                                ) : (
+                                  <span className="text-sm">{nom}</span>
+                                )}
                                 {i < chaine.chemin.length - 1 && (
                                   <ChevronRight className="h-4 w-4 mx-1 text-muted-foreground" />
                                 )}
