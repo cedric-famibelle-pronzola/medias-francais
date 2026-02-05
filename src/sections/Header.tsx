@@ -10,14 +10,11 @@ import {
   Network
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 
 interface HeaderProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
-  onSearch?: (query: string) => void;
-  searchQuery?: string;
-  showSearch?: boolean;
+  onSearch?: () => void;
 }
 
 const navItems = [
@@ -31,9 +28,7 @@ const navItems = [
 export function Header({ 
   activeTab, 
   setActiveTab, 
-  onSearch, 
-  searchQuery = '', 
-  showSearch = false 
+  onSearch
 }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -80,19 +75,19 @@ export function Header({
 
           {/* Search & Mobile Menu */}
           <div className="flex items-center gap-2">
-            {showSearch && onSearch && (
-              <div className="hidden md:flex items-center gap-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    type="text"
-                    placeholder="Rechercher..."
-                    value={searchQuery}
-                    onChange={(e) => onSearch(e.target.value)}
-                    className="w-48 pl-9"
-                  />
-                </div>
-              </div>
+            {onSearch && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onSearch}
+                className="hidden md:flex items-center gap-2 text-muted-foreground"
+              >
+                <Search className="h-4 w-4" />
+                <span className="text-sm">Rechercher</span>
+                <kbd className="hidden lg:inline-flex h-5 items-center gap-1 rounded border bg-muted px-1.5 text-[10px] font-medium text-muted-foreground ml-2">
+                  <span className="text-xs">Ctrl</span>K
+                </kbd>
+              </Button>
             )}
 
             {/* Mobile Menu Button */}
