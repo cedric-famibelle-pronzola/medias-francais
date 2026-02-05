@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useDebounce } from './useDebounce';
 import type {
   Media,
   MediaResponse,
@@ -64,14 +65,16 @@ export function useMedias(page: number = 1, limit: number = 50) {
   return { data, loading, error };
 }
 
-// Hook pour la recherche de médias
-export function useSearchMedias(query: string) {
+// Hook pour la recherche de médias (avec debounce 300ms)
+export function useSearchMedias(query: string, debounceMs: number = 300) {
   const [data, setData] = useState<Media[] | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  
+  const debouncedQuery = useDebounce(query, debounceMs);
 
   useEffect(() => {
-    if (query.length < 2) {
+    if (debouncedQuery.length < 2) {
       setData(null);
       setError(null);
       return;
@@ -82,7 +85,7 @@ export function useSearchMedias(query: string) {
       setError(null);
       try {
         const result = await fetchApi<{ query: string; count: number; results: Media[] }>(
-          `/medias/search?q=${encodeURIComponent(query)}`
+          `/medias/search?q=${encodeURIComponent(debouncedQuery)}`
         );
         setData(result.results);
       } catch (err) {
@@ -93,19 +96,21 @@ export function useSearchMedias(query: string) {
     };
 
     fetchData();
-  }, [query]);
+  }, [debouncedQuery]);
 
   return { data, loading, error };
 }
 
-// Hook pour la recherche de personnes
-export function useSearchPersonnes(query: string) {
+// Hook pour la recherche de personnes (avec debounce 300ms)
+export function useSearchPersonnes(query: string, debounceMs: number = 300) {
   const [data, setData] = useState<Personne[] | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  
+  const debouncedQuery = useDebounce(query, debounceMs);
 
   useEffect(() => {
-    if (query.length < 2) {
+    if (debouncedQuery.length < 2) {
       setData(null);
       setError(null);
       return;
@@ -116,7 +121,7 @@ export function useSearchPersonnes(query: string) {
       setError(null);
       try {
         const result = await fetchApi<{ query: string; count: number; results: Personne[] }>(
-          `/personnes/search?q=${encodeURIComponent(query)}`
+          `/personnes/search?q=${encodeURIComponent(debouncedQuery)}`
         );
         setData(result.results);
       } catch (err) {
@@ -127,7 +132,7 @@ export function useSearchPersonnes(query: string) {
     };
 
     fetchData();
-  }, [query]);
+  }, [debouncedQuery]);
 
   return { data, loading, error };
 }
