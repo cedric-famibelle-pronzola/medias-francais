@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
-import { useMedias, usePersonnes, useOrganisations } from '@/hooks/useApi';
+import { useState, useEffect } from 'react';
+import { useSearchMedias, useSearchPersonnes, useOrganisations } from '@/hooks/useApi';
 import {
   CommandDialog,
   CommandEmpty,
@@ -9,7 +9,7 @@ import {
   CommandList,
   CommandSeparator,
 } from '@/components/ui/command';
-import { Newspaper, Users, Building2, Search } from 'lucide-react';
+import { Newspaper, Users, Building2, Search, Loader2 } from 'lucide-react';
 import type { Media, Personne, Organisation } from '@/types';
 
 interface CommandPaletteProps {
@@ -29,8 +29,10 @@ export function CommandPalette({
 }: CommandPaletteProps) {
   const [search, setSearch] = useState('');
 
-  const { data: mediasData } = useMedias(1, 100);
-  const { data: personnesData } = usePersonnes(1, 100);
+  // Recherche API en temps réel
+  const { data: searchMedias, loading: mediasLoading } = useSearchMedias(search, 200);
+  const { data: searchPersonnes, loading: personnesLoading } = useSearchPersonnes(search, 200);
+  // Pour les orgs, on n'a pas de endpoint de recherche, on filtre côté client (max 100 par l'API)
   const { data: orgsData } = useOrganisations(1, 100);
 
   // Reset search when closing
@@ -52,31 +54,19 @@ export function CommandPalette({
     return () => document.removeEventListener('keydown', down);
   }, [open, onOpenChange]);
 
-  const filteredMedias = useMemo(() => {
-    if (!search || search.length < 2 || !mediasData?.data) return [];
-    return mediasData.data
-      .filter((m) => m.nom.toLowerCase().includes(search.toLowerCase()))
-      .slice(0, 5);
-  }, [search, mediasData]);
-
-  const filteredPersonnes = useMemo(() => {
-    if (!search || search.length < 2 || !personnesData?.data) return [];
-    return personnesData.data
-      .filter((p) => p.nom.toLowerCase().includes(search.toLowerCase()))
-      .slice(0, 5);
-  }, [search, personnesData]);
-
-  const filteredOrgs = useMemo(() => {
-    if (!search || search.length < 2 || !orgsData?.data) return [];
-    return orgsData.data
-      .filter((o) => o.nom.toLowerCase().includes(search.toLowerCase()))
-      .slice(0, 5);
-  }, [search, orgsData]);
+  // Filtrer les orgs côté client (pas de endpoint de recherche dédié)
+  const filteredOrgs = search.length >= 2 && orgsData?.data
+    ? orgsData.data
+        .filter((o) => o.nom.toLowerCase().includes(search.toLowerCase()))
+        .slice(0, 5)
+    : [];
 
   const hasResults =
-    filteredMedias.length > 0 ||
-    filteredPersonnes.length > 0 ||
+    (searchMedias && searchMedias.length > 0) ||
+    (searchPersonnes && searchPersonnes.length > 0) ||
     filteredOrgs.length > 0;
+
+  const isLoading = mediasLoading || personnesLoading;
 
   return (
     <CommandDialog open={open} onOpenChange={onOpenChange}>
@@ -86,13 +76,24 @@ export function CommandPalette({
         onValueChange={setSearch}
       />
       <CommandList>
-        {!hasResults && search.length >= 2 && (
+        {isLoading && (
+          <div className="py-6 text-center text-sm text-muted-foreground">
+            <Loader2 className="mx-auto h-6 w-6 mb-2 animate-spin opacity-50" />
+            <p>Recherche en cours...</p>
+          </div>
+        )}
+
+        {!isLoading && search.length > 0 && search.length < 2 && (
+          <CommandEmpty>Continuez à taper pour rechercher (min. 2 caractères)</CommandEmpty>
+        )}
+
+        {!isLoading && !hasResults && search.length >= 2 && (
           <CommandEmpty>Aucun résultat trouvé.</CommandEmpty>
         )}
 
-        {filteredMedias.length > 0 && (
+        {!isLoading && searchMedias && searchMedias.length > 0 && (
           <CommandGroup heading="Médias">
-            {filteredMedias.map((media) => (
+            {searchMedias.slice(0, 5).map((media) => (
               <CommandItem
                 key={`media-${media.nom}`}
                 onSelect={() => {
@@ -110,11 +111,11 @@ export function CommandPalette({
           </CommandGroup>
         )}
 
-        {filteredPersonnes.length > 0 && (
+        {!isLoading && searchPersonnes && searchPersonnes.length > 0 && (
           <>
-            {filteredMedias.length > 0 && <CommandSeparator />}
+            {searchMedias && searchMedias.length > 0 && <CommandSeparator />}
             <CommandGroup heading="Personnes">
-              {filteredPersonnes.map((personne) => (
+              {searchPersonnes.slice(0, 5).map((personne) => (
                 <CommandItem
                   key={`personne-${personne.nom}`}
                   onSelect={() => {
@@ -125,7 +126,7 @@ export function CommandPalette({
                   <Users className="mr-2 h-4 w-4 text-purple-500" />
                   <span>{personne.nom}</span>
                   <span className="ml-2 text-xs text-muted-foreground">
-                    {personne.mediasDirects.length + personne.mediasViaOrganisations.length} médias
+                    {(personne.mediasDirects?.length || 0) + (personne.mediasViaOrganisations?.length || 0)} médias
                   </span>
                 </CommandItem>
               ))}
@@ -133,9 +134,9 @@ export function CommandPalette({
           </>
         )}
 
-        {filteredOrgs.length > 0 && (
+        {!isLoading && filteredOrgs.length > 0 && (
           <>
-            {(filteredMedias.length > 0 || filteredPersonnes.length > 0) && (
+            {(searchMedias?.length || 0) + (searchPersonnes?.length || 0) > 0 && (
               <CommandSeparator />
             )}
             <CommandGroup heading="Organisations">
@@ -150,7 +151,7 @@ export function CommandPalette({
                   <Building2 className="mr-2 h-4 w-4 text-emerald-500" />
                   <span>{org.nom}</span>
                   <span className="ml-2 text-xs text-muted-foreground">
-                    {org.medias.length} médias
+                    {org.medias?.length || 0} médias
                   </span>
                 </CommandItem>
               ))}
