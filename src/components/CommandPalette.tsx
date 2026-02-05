@@ -4,12 +4,12 @@ import {
   CommandDialog,
   CommandEmpty,
   CommandGroup,
-  CommandInput,
   CommandItem,
   CommandList,
   CommandSeparator,
 } from '@/components/ui/command';
-import { Newspaper, Users, Building2, Search, Loader2 } from 'lucide-react';
+import { Command as CommandPrimitive } from 'cmdk';
+import { Newspaper, Users, Building2, Search, Loader2, X } from 'lucide-react';
 import type { Media, Personne, Organisation } from '@/types';
 
 interface CommandPaletteProps {
@@ -70,11 +70,26 @@ export function CommandPalette({
 
   return (
     <CommandDialog open={open} onOpenChange={onOpenChange}>
-      <CommandInput
-        placeholder="Rechercher un média, une personne, une organisation..."
-        value={search}
-        onValueChange={setSearch}
-      />
+      <div className="flex items-center border-b px-3 h-12">
+        <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+        <CommandPrimitive.Input
+          placeholder="Rechercher un média, une personne, une organisation..."
+          value={search}
+          onValueChange={setSearch}
+          className="flex-1 h-full bg-transparent py-3 text-sm placeholder:text-muted-foreground outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+        />
+        {search ? (
+          <button
+            onClick={() => setSearch('')}
+            className="ml-2 p-1 rounded-sm hover:bg-muted text-muted-foreground hover:text-foreground shrink-0"
+            aria-label="Effacer la recherche"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        ) : (
+          <div className="w-6 shrink-0" />
+        )}
+      </div>
       <CommandList>
         {isLoading && (
           <div className="py-6 text-center text-sm text-muted-foreground">
