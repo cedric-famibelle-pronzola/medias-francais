@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { useOrganisations } from '@/hooks/useApi';
+import { useState, useMemo, useEffect } from 'react';
+import { useOrganisations, useOrganisationDetail } from '@/hooks/useApi';
 import type { Organisation } from '@/types';
 import { 
   Building2, 
@@ -40,10 +40,36 @@ export function OrganisationsSection({ onSelectOrganisation, initialOrganisation
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedOrg, setSelectedOrg] = useState<Organisation | null>(initialOrganisation || null);
   const [detailOpen, setDetailOpen] = useState(!!initialOrganisation);
+  const [orgToLoad, setOrgToLoad] = useState<string | null>(initialOrganisation?.nom || null);
+  
+  const { data: orgDetail, loading: detailLoading } = useOrganisationDetail(orgToLoad);
   
   const limit = 24;
   
   const { data: orgsData, loading: orgsLoading, error: orgsError } = useOrganisations(page, limit);
+
+  // Charger les détails quand on récupère via l'API
+  useEffect(() => {
+    if (orgDetail && orgToLoad) {
+      setSelectedOrg(orgDetail);
+      setOrgToLoad(null);
+    }
+  }, [orgDetail, orgToLoad]);
+
+  // Détecter quand initialOrganisation change (navigation externe)
+  useEffect(() => {
+    if (initialOrganisation) {
+      if (initialOrganisation.proprietaires) {
+        // Organisation complète
+        setSelectedOrg(initialOrganisation);
+        setDetailOpen(true);
+      } else {
+        // Juste un nom, charger les détails
+        setOrgToLoad(initialOrganisation.nom);
+        setDetailOpen(true);
+      }
+    }
+  }, [initialOrganisation?.nom]);
 
   // Filtrer les organisations
   const filteredOrgs = useMemo(() => {
@@ -61,10 +87,17 @@ export function OrganisationsSection({ onSelectOrganisation, initialOrganisation
   }, [searchQuery, orgsData]);
 
   const handleOrgClick = (org: Organisation) => {
-    setSelectedOrg(org);
-    setDetailOpen(true);
-    if (onSelectOrganisation) {
-      onSelectOrganisation(org);
+    // Si l'organisation a tous les détails, on l'utilise directement
+    if (org.proprietaires) {
+      setSelectedOrg(org);
+      setDetailOpen(true);
+      if (onSelectOrganisation) {
+        onSelectOrganisation(org);
+      }
+    } else {
+      // Sinon on charge via l'API
+      setOrgToLoad(org.nom);
+      setDetailOpen(true);
     }
   };
 
@@ -181,7 +214,13 @@ export function OrganisationsSection({ onSelectOrganisation, initialOrganisation
           </DialogHeader>
           
           <ScrollArea className="max-h-[60vh]">
-            {selectedOrg && (
+            {detailLoading ? (
+              <div className="space-y-4">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-20 w-full" />
+              </div>
+            ) : selectedOrg && (
               <div className="space-y-6">
                 {/* Commentaire */}
                 {selectedOrg.commentaire && (
