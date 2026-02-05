@@ -125,19 +125,19 @@ export function OrganisationsSection({ onSelectOrganisation, initialOrganisation
       </div>
 
       {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      <div className="relative max-w-md overflow-visible">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10" />
         <Input
           type="text"
           placeholder="Rechercher une organisation..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-9"
+          className="pl-9 pr-9 w-full"
         />
         {searchQuery && (
           <button
             onClick={() => setSearchQuery('')}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground z-10"
           >
             <X className="h-4 w-4" />
           </button>
@@ -214,7 +214,7 @@ export function OrganisationsSection({ onSelectOrganisation, initialOrganisation
           </DialogHeader>
           
           <ScrollArea className="max-h-[60vh]">
-            {detailLoading ? (
+            {detailLoading || orgToLoad ? (
               <div className="space-y-4">
                 <Skeleton className="h-4 w-32" />
                 <Skeleton className="h-20 w-full" />
@@ -235,7 +235,7 @@ export function OrganisationsSection({ onSelectOrganisation, initialOrganisation
                     <Users className="h-4 w-4" />
                     Propriétaires ({selectedOrg.proprietaires?.length || 0})
                   </h4>
-                  {selectedOrg.proprietaires?.length === 0 ? (
+                  {!selectedOrg.proprietaires?.length ? (
                     <p className="text-sm text-muted-foreground">Aucun propriétaire connu</p>
                   ) : (
                     <div className="space-y-2">
@@ -277,13 +277,13 @@ export function OrganisationsSection({ onSelectOrganisation, initialOrganisation
                 <div>
                   <h4 className="font-semibold mb-3 flex items-center gap-2">
                     <Network className="h-4 w-4" />
-                    Filiales ({selectedOrg.filiales.length})
+                    Filiales ({selectedOrg.filiales?.length || 0})
                   </h4>
-                  {selectedOrg.filiales.length === 0 ? (
+                  {!selectedOrg.filiales?.length ? (
                     <p className="text-sm text-muted-foreground">Aucune filiale</p>
                   ) : (
                     <div className="space-y-2">
-                      {selectedOrg.filiales.map((fil, idx) => (
+                      {selectedOrg.filiales?.map((fil, idx) => (
                         <div 
                           key={idx} 
                           className="flex items-center justify-between p-3 bg-muted rounded-lg"
@@ -309,13 +309,13 @@ export function OrganisationsSection({ onSelectOrganisation, initialOrganisation
                 <div>
                   <h4 className="font-semibold mb-3 flex items-center gap-2">
                     <Newspaper className="h-4 w-4" />
-                    Médias possédés ({selectedOrg.medias.length})
+                    Médias possédés ({selectedOrg.medias?.length || 0})
                   </h4>
-                  {selectedOrg.medias.length === 0 ? (
+                  {!selectedOrg.medias?.length ? (
                     <p className="text-sm text-muted-foreground">Aucun média direct</p>
                   ) : (
                     <div className="space-y-2">
-                      {selectedOrg.medias.map((media, idx) => (
+                      {selectedOrg.medias?.map((media, idx) => (
                         <div 
                           key={idx} 
                           className="flex items-center justify-between p-3 bg-muted rounded-lg"

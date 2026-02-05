@@ -47,6 +47,14 @@ export function PersonnesSection({ onSelectPersonne, initialPersonne, onNavigate
   
   const { data: personneDetail, loading: detailLoading } = usePersonneDetail(personneToLoad);
   
+  // Détecter quand initialPersonne change (navigation externe)
+  useEffect(() => {
+    if (initialPersonne?.nom) {
+      setPersonneToLoad(initialPersonne.nom);
+      setDetailOpen(true);
+    }
+  }, [initialPersonne?.nom]);
+  
   const limit = 24;
   
   const { data: personnesData, loading: personnesLoading, error: personnesError } = usePersonnes(page, limit);
@@ -134,19 +142,24 @@ export function PersonnesSection({ onSelectPersonne, initialPersonne, onNavigate
 
         <TabsContent value="all" className="space-y-6">
           {/* Search */}
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <div className="relative max-w-md overflow-visible">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10" />
             <Input
               type="text"
               placeholder="Rechercher une personne..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && searchQuery.length >= 2) {
+                  // La recherche est déjà déclenchée par le debounce
+                }
+              }}
+              className="pl-9 pr-9 w-full"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground z-10"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -162,7 +175,11 @@ export function PersonnesSection({ onSelectPersonne, initialPersonne, onNavigate
             </div>
           ) : filteredPersonnes.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-muted-foreground">Aucune personne trouvée</p>
+              {searchQuery.length >= 2 ? (
+                <p className="text-muted-foreground">Aucune personne trouvée pour "{searchQuery}"</p>
+              ) : (
+                <p className="text-muted-foreground">Aucune personne trouvée</p>
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -254,7 +271,13 @@ export function PersonnesSection({ onSelectPersonne, initialPersonne, onNavigate
           </DialogHeader>
           
           <ScrollArea className="max-h-[60vh]">
-            {selectedPersonne && (
+            {detailLoading || personneToLoad ? (
+              <div className="space-y-4">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-20 w-full" />
+              </div>
+            ) : selectedPersonne && (
               <div className="space-y-6">
                 {/* Classements */}
                 {selectedPersonne.classements && (

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useMedias, useSearchMedias, useMediaDetail } from '@/hooks/useApi';
 import type { Media } from '@/types';
 import { 
@@ -66,6 +66,14 @@ export function MediasSection({ onSelectMedia, initialMedia, onNavigateToPersonn
   const [selectedMediaName, setSelectedMediaName] = useState<string | null>(initialMedia?.nom || null);
   const [detailOpen, setDetailOpen] = useState(!!initialMedia);
   const { data: selectedMedia, loading: detailLoading } = useMediaDetail(selectedMediaName);
+  
+  // Détecter quand initialMedia change (navigation externe)
+  useEffect(() => {
+    if (initialMedia?.nom && initialMedia.nom !== selectedMediaName) {
+      setSelectedMediaName(initialMedia.nom);
+      setDetailOpen(true);
+    }
+  }, [initialMedia?.nom]);
   
   const limit = 24;
   
@@ -152,19 +160,24 @@ export function MediasSection({ onSelectMedia, initialMedia, onNavigateToPersonn
 
       {/* Filters */}
       <div className="flex flex-col lg:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <div className="relative flex-1 overflow-visible">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground z-10" />
           <Input
             type="text"
             placeholder="Rechercher un média..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && searchQuery.length >= 2) {
+                // La recherche est déjà déclenchée par le debounce
+              }
+            }}
+            className="pl-9 pr-9 w-full"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground z-10"
             >
               <X className="h-4 w-4" />
             </button>
@@ -226,7 +239,13 @@ export function MediasSection({ onSelectMedia, initialMedia, onNavigateToPersonn
         </div>
       ) : filteredMedias.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-muted-foreground">Aucun média trouvé</p>
+          {searchQuery.length > 0 && searchQuery.length < 2 ? (
+            <p className="text-muted-foreground">Tapez au moins 2 caractères pour rechercher</p>
+          ) : searchQuery.length >= 2 ? (
+            <p className="text-muted-foreground">Aucun média trouvé pour "{searchQuery}"</p>
+          ) : (
+            <p className="text-muted-foreground">Aucun média trouvé</p>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
