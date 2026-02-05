@@ -32,15 +32,16 @@ import { cn } from '@/lib/utils';
 
 interface PersonnesSectionProps {
   onSelectPersonne?: (personne: Personne) => void;
+  initialPersonne?: Personne | null;
 }
 
-export function PersonnesSection({ onSelectPersonne }: PersonnesSectionProps) {
+export function PersonnesSection({ onSelectPersonne, initialPersonne }: PersonnesSectionProps) {
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedPersonne, setSelectedPersonne] = useState<Personne | null>(null);
-  const [detailOpen, setDetailOpen] = useState(false);
+  const [selectedPersonne, setSelectedPersonne] = useState<Personne | null>(initialPersonne || null);
+  const [detailOpen, setDetailOpen] = useState(!!initialPersonne);
   const [activeTab, setActiveTab] = useState('all');
-  const [personneToLoad, setPersonneToLoad] = useState<string | null>(null);
+  const [personneToLoad, setPersonneToLoad] = useState<string | null>(initialPersonne ? initialPersonne.nom : null);
   
   const { data: personneDetail, loading: detailLoading } = usePersonneDetail(personneToLoad);
   

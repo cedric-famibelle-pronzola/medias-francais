@@ -29,13 +29,14 @@ import { AlertCircle } from 'lucide-react';
 
 interface OrganisationsSectionProps {
   onSelectOrganisation?: (org: Organisation) => void;
+  initialOrganisation?: Organisation | null;
 }
 
-export function OrganisationsSection({ onSelectOrganisation }: OrganisationsSectionProps) {
+export function OrganisationsSection({ onSelectOrganisation, initialOrganisation }: OrganisationsSectionProps) {
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedOrg, setSelectedOrg] = useState<Organisation | null>(null);
-  const [detailOpen, setDetailOpen] = useState(false);
+  const [selectedOrg, setSelectedOrg] = useState<Organisation | null>(initialOrganisation || null);
+  const [detailOpen, setDetailOpen] = useState(!!initialOrganisation);
   
   const limit = 24;
   

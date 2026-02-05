@@ -52,14 +52,15 @@ const TYPE_COLORS: Record<string, string> = {
 
 interface MediasSectionProps {
   onSelectMedia?: (media: Media) => void;
+  initialMedia?: Media | null;
 }
 
-export function MediasSection({ onSelectMedia }: MediasSectionProps) {
+export function MediasSection({ onSelectMedia, initialMedia }: MediasSectionProps) {
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
-  const [selectedMediaName, setSelectedMediaName] = useState<string | null>(null);
-  const [detailOpen, setDetailOpen] = useState(false);
+  const [selectedMediaName, setSelectedMediaName] = useState<string | null>(initialMedia?.nom || null);
+  const [detailOpen, setDetailOpen] = useState(!!initialMedia);
   const { data: selectedMedia, loading: detailLoading } = useMediaDetail(selectedMediaName);
   
   const limit = 24;
