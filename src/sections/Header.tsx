@@ -76,18 +76,31 @@ export function Header({
           {/* Search & Mobile Menu */}
           <div className="flex items-center gap-2">
             {onSearch && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={onSearch}
-                className="hidden md:flex items-center gap-2 text-muted-foreground"
-              >
-                <Search className="h-4 w-4" />
-                <span className="text-sm">Rechercher</span>
-                <kbd className="hidden lg:inline-flex h-5 items-center gap-1 rounded border bg-muted px-1.5 text-[10px] font-medium text-muted-foreground ml-2">
-                  <span className="text-xs">Ctrl</span>K
-                </kbd>
-              </Button>
+              <>
+                {/* Desktop: bouton complet avec texte */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onSearch}
+                  className="hidden md:flex items-center gap-2 text-muted-foreground"
+                >
+                  <Search className="h-4 w-4" />
+                  <span className="text-sm">Rechercher</span>
+                  <kbd className="hidden lg:inline-flex h-5 items-center gap-1 rounded border bg-muted px-1.5 text-[10px] font-medium text-muted-foreground ml-2">
+                    <span className="text-xs">Ctrl</span>K
+                  </kbd>
+                </Button>
+                {/* Mobile: icône seule */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onSearch}
+                  className="md:hidden text-muted-foreground"
+                  aria-label="Rechercher"
+                >
+                  <Search className="h-5 w-5" />
+                </Button>
+              </>
             )}
 
             {/* Mobile Menu Button */}
