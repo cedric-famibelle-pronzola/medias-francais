@@ -33,9 +33,11 @@ import { cn } from '@/lib/utils';
 interface PersonnesSectionProps {
   onSelectPersonne?: (personne: Personne) => void;
   initialPersonne?: Personne | null;
+  onNavigateToMedia?: (nom: string) => void;
+  onNavigateToOrganisation?: (nom: string) => void;
 }
 
-export function PersonnesSection({ onSelectPersonne, initialPersonne }: PersonnesSectionProps) {
+export function PersonnesSection({ onSelectPersonne, initialPersonne, onNavigateToMedia, onNavigateToOrganisation }: PersonnesSectionProps) {
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPersonne, setSelectedPersonne] = useState<Personne | null>(initialPersonne || null);
@@ -285,7 +287,16 @@ export function PersonnesSection({ onSelectPersonne, initialPersonne }: Personne
                           className="flex items-center justify-between p-3 bg-muted rounded-lg"
                         >
                           <div>
-                            <p className="font-medium">{media.nom}</p>
+                            {onNavigateToMedia ? (
+                              <button
+                                onClick={() => onNavigateToMedia(media.nom)}
+                                className="font-medium text-primary hover:underline text-left"
+                              >
+                                {media.nom}
+                              </button>
+                            ) : (
+                              <p className="font-medium">{media.nom}</p>
+                            )}
                             <p className="text-xs text-muted-foreground">{media.type}</p>
                           </div>
                           <Badge variant="outline">{media.valeur}</Badge>
@@ -314,11 +325,29 @@ export function PersonnesSection({ onSelectPersonne, initialPersonne }: Personne
                         
                         return Object.entries(grouped).map(([orgName, medias], idx) => (
                           <div key={idx} className="p-3 bg-muted rounded-lg">
-                            <p className="font-medium mb-2">{orgName}</p>
+                            {onNavigateToOrganisation ? (
+                              <button
+                                onClick={() => onNavigateToOrganisation(orgName.split(' → ')[0])}
+                                className="font-medium text-primary hover:underline text-left mb-2"
+                              >
+                                {orgName}
+                              </button>
+                            ) : (
+                              <p className="font-medium mb-2">{orgName}</p>
+                            )}
                             <div className="space-y-1">
                               {medias.map((media, mIdx) => (
                                 <div key={mIdx} className="flex items-center justify-between text-sm">
-                                  <span>{media.nom}</span>
+                                  {onNavigateToMedia ? (
+                                    <button
+                                      onClick={() => onNavigateToMedia(media.nom)}
+                                      className="text-primary hover:underline"
+                                    >
+                                      {media.nom}
+                                    </button>
+                                  ) : (
+                                    <span>{media.nom}</span>
+                                  )}
                                   <Badge variant="outline" className="text-xs">{media.valeur}</Badge>
                                 </div>
                               ))}
@@ -345,7 +374,16 @@ export function PersonnesSection({ onSelectPersonne, initialPersonne }: Personne
                           key={idx} 
                           className="flex items-center justify-between p-3 bg-muted rounded-lg"
                         >
-                          <p className="font-medium">{org.nom}</p>
+                          {onNavigateToOrganisation ? (
+                            <button
+                              onClick={() => onNavigateToOrganisation(org.nom)}
+                              className="font-medium text-primary hover:underline text-left"
+                            >
+                              {org.nom}
+                            </button>
+                          ) : (
+                            <p className="font-medium">{org.nom}</p>
+                          )}
                           <Badge variant="outline">{org.valeur}</Badge>
                         </div>
                       ))}
