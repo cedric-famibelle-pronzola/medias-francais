@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { usePersonnes, useTopChallenges, usePersonneDetail } from '@/hooks/useApi';
+import { usePersonnes, useTopChallenges, usePersonneDetail, useSearchPersonnes } from '@/hooks/useApi';
 import type { Personne, TopChallenge } from '@/types';
 import { 
   Users, 
@@ -47,22 +47,16 @@ export function PersonnesSection({ onSelectPersonne }: PersonnesSectionProps) {
   const limit = 24;
   
   const { data: personnesData, loading: personnesLoading, error: personnesError } = usePersonnes(page, limit);
+  const { data: searchResults, loading: searchLoading } = useSearchPersonnes(searchQuery);
   const { data: topChallenges, loading: tcLoading } = useTopChallenges();
 
-  // Filtrer les personnes
+  // Utiliser les résultats de recherche si une recherche est active, sinon la pagination
   const filteredPersonnes = useMemo(() => {
-    if (!personnesData?.data) return [];
-    
-    let personnes = personnesData.data;
-    
     if (searchQuery.length >= 2) {
-      personnes = personnes.filter(p => 
-        p.nom.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+      return searchResults || [];
     }
-    
-    return personnes;
-  }, [searchQuery, personnesData]);
+    return personnesData?.data || [];
+  }, [searchQuery, searchResults, personnesData]);
 
   // Vérifier si une personne est dans le top challenges
   const isTopChallenge = (nom: string): boolean => {
@@ -86,7 +80,6 @@ export function PersonnesSection({ onSelectPersonne }: PersonnesSectionProps) {
   useEffect(() => {
     if (personneDetail && personneToLoad) {
       setSelectedPersonne(personneDetail);
-      setDetailOpen(true);
       setPersonneToLoad(null);
       if (onSelectPersonne) {
         onSelectPersonne(personneDetail);
@@ -95,22 +88,15 @@ export function PersonnesSection({ onSelectPersonne }: PersonnesSectionProps) {
   }, [personneDetail, personneToLoad, onSelectPersonne]);
 
   const handlePersonneClick = (personne: Personne) => {
-    setSelectedPersonne(personne);
+    // Toujours charger le détail complet via l'API pour avoir toutes les infos
+    setPersonneToLoad(personne.nom);
     setDetailOpen(true);
-    if (onSelectPersonne) {
-      onSelectPersonne(personne);
-    }
   };
   
   const handleTopChallengeClick = (nom: string) => {
-    // Chercher d'abord dans les données déjà chargées
-    const fullPersonne = personnesData?.data.find(p => p.nom === nom);
-    if (fullPersonne) {
-      handlePersonneClick(fullPersonne);
-    } else {
-      // Sinon charger via l'API
-      setPersonneToLoad(nom);
-    }
+    // Toujours charger via l'API pour avoir les données complètes
+    setPersonneToLoad(nom);
+    setDetailOpen(true);
   };
 
   if (personnesError) {
@@ -165,7 +151,7 @@ export function PersonnesSection({ onSelectPersonne }: PersonnesSectionProps) {
           </div>
 
           {/* Grid */}
-          {personnesLoading ? (
+          {personnesLoading || searchLoading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {[...Array(8)].map((_, i) => (
                 <Skeleton key={i} className="h-32" />
@@ -190,7 +176,7 @@ export function PersonnesSection({ onSelectPersonne }: PersonnesSectionProps) {
             </div>
           )}
 
-          {/* Pagination */}
+          {/* Pagination - uniquement sans recherche */}
           {personnesData && searchQuery.length < 2 && (
             <div className="flex items-center justify-center gap-4 pt-4">
               <Button
