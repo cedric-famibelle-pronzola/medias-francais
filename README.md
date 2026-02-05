@@ -72,7 +72,7 @@ Ce projet est distribué sous licence **AGPL-3.0** (GNU Affero General Public Li
 
 ## 🤖 Crédits
 
-- **Développeur** : Cédric Cédric Famibelle-Pronzola
+- **Développeur** : Cédric Famibelle-Pronzola
 - **Repository** : [github.com/cedric-famibelle-pronzola/medias-francais](https://github.com/cedric-famibelle-pronzola/medias-francais)
 - **Interface** : Développée avec [Kimi](https://kimi.moonshot.cn), l'assistant IA de Moonshot AI
 - **Données** : [Monde Diplomatique - Médias Français](https://github.com/mdiplo/Medias_francais)
