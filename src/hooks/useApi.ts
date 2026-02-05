@@ -98,6 +98,40 @@ export function useSearchMedias(query: string) {
   return { data, loading, error };
 }
 
+// Hook pour la recherche de personnes
+export function useSearchPersonnes(query: string) {
+  const [data, setData] = useState<Personne[] | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (query.length < 2) {
+      setData(null);
+      setError(null);
+      return;
+    }
+
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const result = await fetchApi<{ query: string; count: number; results: Personne[] }>(
+          `/personnes/search?q=${encodeURIComponent(query)}`
+        );
+        setData(result.results);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [query]);
+
+  return { data, loading, error };
+}
+
 // Hook pour le détail d'un média
 export function useMediaDetail(nom: string | null) {
   const [data, setData] = useState<Media | null>(null);
