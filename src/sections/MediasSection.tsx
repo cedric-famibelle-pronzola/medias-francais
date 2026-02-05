@@ -61,6 +61,8 @@ export function MediasSection({ onSelectMedia, initialMedia, onNavigateToPersonn
   const [page, setPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [prixFilter, setPrixFilter] = useState<string>('all');
+  const [echelleFilter, setEchelleFilter] = useState<string>('all');
   const [selectedMediaName, setSelectedMediaName] = useState<string | null>(initialMedia?.nom || null);
   const [detailOpen, setDetailOpen] = useState(!!initialMedia);
   const { data: selectedMedia, loading: detailLoading } = useMediaDetail(selectedMediaName);
@@ -69,6 +71,17 @@ export function MediasSection({ onSelectMedia, initialMedia, onNavigateToPersonn
   
   const { data: mediasData, loading: mediasLoading, error: mediasError } = useMedias(page, limit);
   const { data: searchResults, loading: searchLoading } = useSearchMedias(searchQuery);
+
+  // Réinitialiser tous les filtres
+  const resetFilters = () => {
+    setTypeFilter('all');
+    setPrixFilter('all');
+    setEchelleFilter('all');
+    setSearchQuery('');
+  };
+
+  // Vérifier si des filtres sont actifs
+  const hasActiveFilters = typeFilter !== 'all' || prixFilter !== 'all' || echelleFilter !== 'all' || searchQuery.length > 0;
 
   // Filtrer les médias
   const filteredMedias = useMemo(() => {
@@ -84,8 +97,16 @@ export function MediasSection({ onSelectMedia, initialMedia, onNavigateToPersonn
       medias = medias.filter(m => m.type === typeFilter);
     }
     
+    if (prixFilter !== 'all') {
+      medias = medias.filter(m => m.prix === prixFilter);
+    }
+    
+    if (echelleFilter !== 'all') {
+      medias = medias.filter(m => m.echelle === echelleFilter);
+    }
+    
     return medias;
-  }, [searchQuery, searchResults, mediasData, typeFilter]);
+  }, [searchQuery, searchResults, mediasData, typeFilter, prixFilter, echelleFilter]);
 
   // Types uniques pour le filtre
   const uniqueTypes = useMemo(() => {
@@ -130,7 +151,7 @@ export function MediasSection({ onSelectMedia, initialMedia, onNavigateToPersonn
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
+      <div className="flex flex-col lg:flex-row gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -149,10 +170,10 @@ export function MediasSection({ onSelectMedia, initialMedia, onNavigateToPersonn
             </button>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Filter className="h-4 w-4 text-muted-foreground" />
           <Select value={typeFilter} onValueChange={setTypeFilter}>
-            <SelectTrigger className="w-48">
+            <SelectTrigger className="w-40">
               <SelectValue placeholder="Tous les types" />
             </SelectTrigger>
             <SelectContent>
@@ -162,6 +183,37 @@ export function MediasSection({ onSelectMedia, initialMedia, onNavigateToPersonn
               ))}
             </SelectContent>
           </Select>
+          
+          <Select value={prixFilter} onValueChange={setPrixFilter}>
+            <SelectTrigger className="w-36">
+              <SelectValue placeholder="Prix" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous prix</SelectItem>
+              <SelectItem value="Gratuit">Gratuit</SelectItem>
+              <SelectItem value="Payant">Payant</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <Select value={echelleFilter} onValueChange={setEchelleFilter}>
+            <SelectTrigger className="w-36">
+              <SelectValue placeholder="Échelle" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toutes échelles</SelectItem>
+              <SelectItem value="National">National</SelectItem>
+              <SelectItem value="Régional">Régional</SelectItem>
+              <SelectItem value="Europe">Europe</SelectItem>
+              <SelectItem value="Suisse">Suisse</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          {hasActiveFilters && (
+            <Button variant="ghost" size="sm" onClick={resetFilters} className="text-muted-foreground">
+              <X className="h-4 w-4 mr-1" />
+              Réinitialiser
+            </Button>
+          )}
         </div>
       </div>
 
