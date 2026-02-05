@@ -16,7 +16,9 @@ import {
   Building2,
   Newspaper,
   ChevronRight,
-  Hand
+  Hand,
+  Eye,
+  Crosshair
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -81,6 +83,9 @@ export function ReseauSection() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const [hoveredNode, setHoveredNode] = useState<Node | null>(null);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [focusMode, setFocusMode] = useState(false);
   const animationRef = useRef<number | null>(null);
   const lastMousePos = useRef({ x: 0, y: 0 });
   const lastFrameTime = useRef<number>(0);
@@ -436,6 +441,16 @@ export function ReseauSection() {
       return true;
     });
 
+    // Calculer les nœuds connectés au nœud sélectionné pour le mode focus
+    const connectedNodeIds = new Set<string>();
+    if (focusMode && selectedNode) {
+      connectedNodeIds.add(selectedNode.id);
+      edges.forEach(edge => {
+        if (edge.source === selectedNode.id) connectedNodeIds.add(edge.target);
+        if (edge.target === selectedNode.id) connectedNodeIds.add(edge.source);
+      });
+    }
+
     ctx.strokeStyle = '#94a3b8';
     ctx.lineWidth = 1;
     edges.forEach(edge => {
@@ -451,6 +466,7 @@ export function ReseauSection() {
 
     filteredNodes.forEach(node => {
       const isSelected = selectedNode?.id === node.id;
+      const isDimmed = focusMode && selectedNode && !connectedNodeIds.has(node.id);
       
       // Ombre portée
       ctx.save();
@@ -475,7 +491,12 @@ export function ReseauSection() {
         node.radius
       );
       
-      if (node.type === 'media') {
+      if (isDimmed) {
+        // Grisé pour les nœuds non connectés en mode focus
+        gradient.addColorStop(0, '#d1d5db');
+        gradient.addColorStop(0.5, '#9ca3af');
+        gradient.addColorStop(1, '#6b7280');
+      } else if (node.type === 'media') {
         gradient.addColorStop(0, '#60a5fa');
         gradient.addColorStop(0.5, '#3b82f6');
         gradient.addColorStop(1, '#1d4ed8');
@@ -630,6 +651,7 @@ export function ReseauSection() {
 
   const handleMouseMove = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
     const { x, y } = screenToCanvas(e.clientX, e.clientY);
+    setMousePos({ x: e.clientX, y: e.clientY });
 
     if (draggingRef.current && toolModeRef.current === 'select') {
       setNodes(prev => prev.map(node => 
@@ -643,6 +665,14 @@ export function ReseauSection() {
         y: prev.y + dy
       }));
       lastMousePos.current = { x: e.clientX, y: e.clientY };
+    } else if (toolModeRef.current === 'select') {
+      // Détection du survol pour tooltip
+      const hovered = nodesRef.current.find(node => {
+        const dx = node.x - x;
+        const dy = node.y - y;
+        return Math.sqrt(dx * dx + dy * dy) < node.radius;
+      });
+      setHoveredNode(hovered || null);
     }
   }, [screenToCanvas]);
 
@@ -835,6 +865,34 @@ export function ReseauSection() {
             <RotateCcw className="h-4 w-4" />
           </Button>
         </div>
+
+        {selectedNode && (
+          <div className="flex items-center gap-2">
+            <Button
+              variant={focusMode ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setFocusMode(!focusMode)}
+              title="Mode focus"
+            >
+              <Eye className="h-4 w-4 mr-1" />
+              Focus
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setOffset({
+                  x: CANVAS_WIDTH / 2 - selectedNode.x * scale,
+                  y: CANVAS_HEIGHT / 2 - selectedNode.y * scale
+                });
+              }}
+              title="Centrer sur la sélection"
+            >
+              <Crosshair className="h-4 w-4 mr-1" />
+              Centrer
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Legend */}
@@ -883,6 +941,19 @@ export function ReseauSection() {
               onTouchEnd={handleTouchEnd}
               onContextMenu={handleContextMenu}
             />
+            {/* Tooltip au survol */}
+            {hoveredNode && !dragging && (
+              <div 
+                className="absolute pointer-events-none z-50 bg-popover text-popover-foreground px-3 py-2 rounded-lg shadow-lg border text-sm"
+                style={{
+                  left: mousePos.x + 10,
+                  top: mousePos.y - 30,
+                }}
+              >
+                <p className="font-medium">{hoveredNode.label}</p>
+                <p className="text-xs text-muted-foreground capitalize">{hoveredNode.type}</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
